@@ -35,6 +35,9 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
   const styleRef = useRef(style);
   styleRef.current = style;
 
+  // Остання версія малювання — щоб її можна було викликати з ефекту зміни стилю.
+  const renderRef = useRef<() => void>(() => {});
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container || mapRef.current) return;
@@ -131,8 +134,8 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
       }
     };
 
+    renderRef.current = render;
     render();
-    // Зміна стилю стирає всі додані шари — `styledata` повертає маршрут на місце.
     map.on('styledata', render);
     return () => {
       map.off('styledata', render);
@@ -147,6 +150,21 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
     appliedStyleRef.current = style.id;
     map.setStyle(style.url);
     saveMapStyle(style.id);
+
+    // Підміна стилю асинхронна і стирає всі наші шари. Подія `styledata` після неї
+    // приходить не завжди, тому кілька секунд активно перевіряємо й повертаємо
+    // маршрут на місце. Перевірка ідемпотентна: якщо шар цілий, нічого не робимо.
+    let attempts = 0;
+    const timer = setInterval(() => {
+      const m = mapRef.current;
+      if (!m || attempts++ > 24) {
+        clearInterval(timer);
+        return;
+      }
+      if (!m.getLayer('route-line')) renderRef.current();
+    }, 250);
+
+    return () => clearInterval(timer);
   }, [style]);
 
   return (
