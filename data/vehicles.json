@@ -1,0 +1,667 @@
+[
+  {
+    "id": "tesla-model-3-lr",
+    "make": "Tesla",
+    "model": "Model 3 Long Range AWD (2024)",
+    "batteryKwh": 75,
+    "baseConsumptionWhPerKm": 152,
+    "maxDcPowerKw": 250,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "tesla"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 170 },
+      { "socPct": 10, "powerKw": 250 },
+      { "socPct": 20, "powerKw": 210 },
+      { "socPct": 40, "powerKw": 145 },
+      { "socPct": 60, "powerKw": 95 },
+      { "socPct": 80, "powerKw": 55 },
+      { "socPct": 90, "powerKw": 32 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "tesla-model-3-sr",
+    "make": "Tesla",
+    "model": "Model 3 RWD LFP (2024)",
+    "batteryKwh": 57.5,
+    "baseConsumptionWhPerKm": 143,
+    "maxDcPowerKw": 170,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "tesla"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 120 },
+      { "socPct": 10, "powerKw": 170 },
+      { "socPct": 30, "powerKw": 130 },
+      { "socPct": 50, "powerKw": 90 },
+      { "socPct": 70, "powerKw": 60 },
+      { "socPct": 85, "powerKw": 35 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "tesla-model-y-lr",
+    "make": "Tesla",
+    "model": "Model Y Long Range AWD (2024)",
+    "batteryKwh": 75,
+    "baseConsumptionWhPerKm": 168,
+    "maxDcPowerKw": 250,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "tesla"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 170 },
+      { "socPct": 10, "powerKw": 250 },
+      { "socPct": 20, "powerKw": 205 },
+      { "socPct": 40, "powerKw": 140 },
+      { "socPct": 60, "powerKw": 92 },
+      { "socPct": 80, "powerKw": 52 },
+      { "socPct": 90, "powerKw": 30 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "tesla-model-s-plaid",
+    "make": "Tesla",
+    "model": "Model S Plaid (2023)",
+    "batteryKwh": 95,
+    "baseConsumptionWhPerKm": 175,
+    "maxDcPowerKw": 250,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "tesla"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 180 },
+      { "socPct": 10, "powerKw": 250 },
+      { "socPct": 25, "powerKw": 190 },
+      { "socPct": 45, "powerKw": 130 },
+      { "socPct": 65, "powerKw": 85 },
+      { "socPct": 80, "powerKw": 50 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "tesla-model-s-70d-2015",
+    "make": "Tesla",
+    "model": "Model S 70D (2015)",
+    "batteryKwh": 68,
+    "baseConsumptionWhPerKm": 200,
+    "maxDcPowerKw": 120,
+    "maxAcPowerKw": 11,
+    "connectors": ["tesla", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 110 },
+      { "socPct": 10, "powerKw": 118 },
+      { "socPct": 30, "powerKw": 100 },
+      { "socPct": 50, "powerKw": 72 },
+      { "socPct": 70, "powerKw": 45 },
+      { "socPct": 85, "powerKw": 25 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "vw-id3-pro",
+    "make": "Volkswagen",
+    "model": "ID.3 Pro 58 kWh",
+    "batteryKwh": 58,
+    "baseConsumptionWhPerKm": 160,
+    "maxDcPowerKw": 120,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 100 },
+      { "socPct": 10, "powerKw": 120 },
+      { "socPct": 35, "powerKw": 110 },
+      { "socPct": 55, "powerKw": 75 },
+      { "socPct": 70, "powerKw": 55 },
+      { "socPct": 85, "powerKw": 30 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "vw-id4-pro",
+    "make": "Volkswagen",
+    "model": "ID.4 Pro 77 kWh",
+    "batteryKwh": 77,
+    "baseConsumptionWhPerKm": 178,
+    "maxDcPowerKw": 135,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 110 },
+      { "socPct": 10, "powerKw": 135 },
+      { "socPct": 40, "powerKw": 115 },
+      { "socPct": 60, "powerKw": 80 },
+      { "socPct": 75, "powerKw": 55 },
+      { "socPct": 90, "powerKw": 28 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "vw-id7-pro",
+    "make": "Volkswagen",
+    "model": "ID.7 Pro 77 kWh",
+    "batteryKwh": 77,
+    "baseConsumptionWhPerKm": 158,
+    "maxDcPowerKw": 175,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 130 },
+      { "socPct": 10, "powerKw": 175 },
+      { "socPct": 35, "powerKw": 150 },
+      { "socPct": 55, "powerKw": 100 },
+      { "socPct": 75, "powerKw": 60 },
+      { "socPct": 90, "powerKw": 30 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "skoda-enyaq-80",
+    "make": "Škoda",
+    "model": "Enyaq iV 80",
+    "batteryKwh": 77,
+    "baseConsumptionWhPerKm": 176,
+    "maxDcPowerKw": 135,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 110 },
+      { "socPct": 10, "powerKw": 135 },
+      { "socPct": 40, "powerKw": 115 },
+      { "socPct": 60, "powerKw": 80 },
+      { "socPct": 75, "powerKw": 55 },
+      { "socPct": 90, "powerKw": 28 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "hyundai-ioniq5-77",
+    "make": "Hyundai",
+    "model": "IONIQ 5 77.4 kWh RWD",
+    "batteryKwh": 74,
+    "baseConsumptionWhPerKm": 173,
+    "maxDcPowerKw": 233,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 180 },
+      { "socPct": 10, "powerKw": 233 },
+      { "socPct": 45, "powerKw": 215 },
+      { "socPct": 60, "powerKw": 130 },
+      { "socPct": 75, "powerKw": 85 },
+      { "socPct": 85, "powerKw": 50 },
+      { "socPct": 100, "powerKw": 10 }
+    ]
+  },
+  {
+    "id": "hyundai-ioniq6-77",
+    "make": "Hyundai",
+    "model": "IONIQ 6 77.4 kWh RWD",
+    "batteryKwh": 74,
+    "baseConsumptionWhPerKm": 145,
+    "maxDcPowerKw": 233,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 180 },
+      { "socPct": 10, "powerKw": 233 },
+      { "socPct": 45, "powerKw": 215 },
+      { "socPct": 60, "powerKw": 130 },
+      { "socPct": 75, "powerKw": 85 },
+      { "socPct": 85, "powerKw": 50 },
+      { "socPct": 100, "powerKw": 10 }
+    ]
+  },
+  {
+    "id": "hyundai-kona-64",
+    "make": "Hyundai",
+    "model": "Kona Electric 65 kWh (2024)",
+    "batteryKwh": 65,
+    "baseConsumptionWhPerKm": 155,
+    "maxDcPowerKw": 102,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 85 },
+      { "socPct": 10, "powerKw": 102 },
+      { "socPct": 45, "powerKw": 90 },
+      { "socPct": 65, "powerKw": 62 },
+      { "socPct": 80, "powerKw": 38 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "kia-ev6-77",
+    "make": "Kia",
+    "model": "EV6 77.4 kWh RWD",
+    "batteryKwh": 74,
+    "baseConsumptionWhPerKm": 168,
+    "maxDcPowerKw": 233,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 180 },
+      { "socPct": 10, "powerKw": 233 },
+      { "socPct": 45, "powerKw": 215 },
+      { "socPct": 60, "powerKw": 130 },
+      { "socPct": 75, "powerKw": 85 },
+      { "socPct": 85, "powerKw": 50 },
+      { "socPct": 100, "powerKw": 10 }
+    ]
+  },
+  {
+    "id": "kia-ev9-99",
+    "make": "Kia",
+    "model": "EV9 99.8 kWh AWD",
+    "batteryKwh": 96,
+    "baseConsumptionWhPerKm": 215,
+    "maxDcPowerKw": 210,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 170 },
+      { "socPct": 10, "powerKw": 210 },
+      { "socPct": 45, "powerKw": 190 },
+      { "socPct": 65, "powerKw": 120 },
+      { "socPct": 80, "powerKw": 70 },
+      { "socPct": 100, "powerKw": 10 }
+    ]
+  },
+  {
+    "id": "kia-niro-ev",
+    "make": "Kia",
+    "model": "Niro EV 64 kWh",
+    "batteryKwh": 64.8,
+    "baseConsumptionWhPerKm": 160,
+    "maxDcPowerKw": 80,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 70 },
+      { "socPct": 10, "powerKw": 80 },
+      { "socPct": 50, "powerKw": 72 },
+      { "socPct": 70, "powerKw": 50 },
+      { "socPct": 85, "powerKw": 30 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "bmw-i4-edrive40",
+    "make": "BMW",
+    "model": "i4 eDrive40",
+    "batteryKwh": 81.3,
+    "baseConsumptionWhPerKm": 160,
+    "maxDcPowerKw": 205,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 160 },
+      { "socPct": 10, "powerKw": 205 },
+      { "socPct": 35, "powerKw": 170 },
+      { "socPct": 55, "powerKw": 110 },
+      { "socPct": 75, "powerKw": 65 },
+      { "socPct": 90, "powerKw": 32 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "bmw-ix3",
+    "make": "BMW",
+    "model": "iX3",
+    "batteryKwh": 74,
+    "baseConsumptionWhPerKm": 185,
+    "maxDcPowerKw": 150,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 120 },
+      { "socPct": 10, "powerKw": 150 },
+      { "socPct": 40, "powerKw": 125 },
+      { "socPct": 60, "powerKw": 85 },
+      { "socPct": 80, "powerKw": 45 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "bmw-ix-xdrive50",
+    "make": "BMW",
+    "model": "iX xDrive50",
+    "batteryKwh": 105.2,
+    "baseConsumptionWhPerKm": 195,
+    "maxDcPowerKw": 195,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 160 },
+      { "socPct": 10, "powerKw": 195 },
+      { "socPct": 40, "powerKw": 165 },
+      { "socPct": 60, "powerKw": 110 },
+      { "socPct": 80, "powerKw": 60 },
+      { "socPct": 100, "powerKw": 9 }
+    ]
+  },
+  {
+    "id": "mercedes-eqe-350",
+    "make": "Mercedes-Benz",
+    "model": "EQE 350+",
+    "batteryKwh": 89,
+    "baseConsumptionWhPerKm": 165,
+    "maxDcPowerKw": 170,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 140 },
+      { "socPct": 10, "powerKw": 170 },
+      { "socPct": 40, "powerKw": 145 },
+      { "socPct": 60, "powerKw": 100 },
+      { "socPct": 80, "powerKw": 55 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "mercedes-eqa-250",
+    "make": "Mercedes-Benz",
+    "model": "EQA 250",
+    "batteryKwh": 66.5,
+    "baseConsumptionWhPerKm": 178,
+    "maxDcPowerKw": 100,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 85 },
+      { "socPct": 10, "powerKw": 100 },
+      { "socPct": 45, "powerKw": 88 },
+      { "socPct": 65, "powerKw": 60 },
+      { "socPct": 85, "powerKw": 32 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "audi-q4-etron-45",
+    "make": "Audi",
+    "model": "Q4 e-tron 45",
+    "batteryKwh": 77,
+    "baseConsumptionWhPerKm": 180,
+    "maxDcPowerKw": 175,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 130 },
+      { "socPct": 10, "powerKw": 175 },
+      { "socPct": 35, "powerKw": 145 },
+      { "socPct": 55, "powerKw": 100 },
+      { "socPct": 75, "powerKw": 60 },
+      { "socPct": 90, "powerKw": 30 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "audi-etron-gt",
+    "make": "Audi",
+    "model": "e-tron GT quattro",
+    "batteryKwh": 84,
+    "baseConsumptionWhPerKm": 185,
+    "maxDcPowerKw": 270,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 220 },
+      { "socPct": 10, "powerKw": 270 },
+      { "socPct": 40, "powerKw": 235 },
+      { "socPct": 60, "powerKw": 150 },
+      { "socPct": 80, "powerKw": 70 },
+      { "socPct": 100, "powerKw": 10 }
+    ]
+  },
+  {
+    "id": "porsche-taycan-4s",
+    "make": "Porsche",
+    "model": "Taycan 4S Performance Plus",
+    "batteryKwh": 83.7,
+    "baseConsumptionWhPerKm": 190,
+    "maxDcPowerKw": 270,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 220 },
+      { "socPct": 10, "powerKw": 270 },
+      { "socPct": 40, "powerKw": 235 },
+      { "socPct": 60, "powerKw": 150 },
+      { "socPct": 80, "powerKw": 70 },
+      { "socPct": 100, "powerKw": 10 }
+    ]
+  },
+  {
+    "id": "renault-megane-etech",
+    "make": "Renault",
+    "model": "Mégane E-Tech EV60",
+    "batteryKwh": 60,
+    "baseConsumptionWhPerKm": 158,
+    "maxDcPowerKw": 130,
+    "maxAcPowerKw": 22,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 105 },
+      { "socPct": 10, "powerKw": 130 },
+      { "socPct": 35, "powerKw": 110 },
+      { "socPct": 55, "powerKw": 75 },
+      { "socPct": 75, "powerKw": 45 },
+      { "socPct": 90, "powerKw": 25 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "renault-zoe-r135",
+    "make": "Renault",
+    "model": "Zoe R135 ZE50",
+    "batteryKwh": 52,
+    "baseConsumptionWhPerKm": 165,
+    "maxDcPowerKw": 46,
+    "maxAcPowerKw": 22,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 40 },
+      { "socPct": 20, "powerKw": 46 },
+      { "socPct": 60, "powerKw": 40 },
+      { "socPct": 80, "powerKw": 25 },
+      { "socPct": 100, "powerKw": 6 }
+    ]
+  },
+  {
+    "id": "nissan-ariya-87",
+    "make": "Nissan",
+    "model": "Ariya 87 kWh",
+    "batteryKwh": 87,
+    "baseConsumptionWhPerKm": 185,
+    "maxDcPowerKw": 130,
+    "maxAcPowerKw": 22,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 110 },
+      { "socPct": 10, "powerKw": 130 },
+      { "socPct": 45, "powerKw": 110 },
+      { "socPct": 65, "powerKw": 75 },
+      { "socPct": 85, "powerKw": 40 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "nissan-leaf-62",
+    "make": "Nissan",
+    "model": "Leaf e+ 62 kWh",
+    "batteryKwh": 56,
+    "baseConsumptionWhPerKm": 175,
+    "maxDcPowerKw": 46,
+    "maxAcPowerKw": 6.6,
+    "connectors": ["chademo", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 44 },
+      { "socPct": 20, "powerKw": 46 },
+      { "socPct": 50, "powerKw": 38 },
+      { "socPct": 70, "powerKw": 26 },
+      { "socPct": 85, "powerKw": 18 },
+      { "socPct": 100, "powerKw": 5 }
+    ]
+  },
+  {
+    "id": "peugeot-e208",
+    "make": "Peugeot",
+    "model": "e-208 51 kWh",
+    "batteryKwh": 48.1,
+    "baseConsumptionWhPerKm": 150,
+    "maxDcPowerKw": 100,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 85 },
+      { "socPct": 10, "powerKw": 100 },
+      { "socPct": 40, "powerKw": 85 },
+      { "socPct": 60, "powerKw": 60 },
+      { "socPct": 80, "powerKw": 32 },
+      { "socPct": 100, "powerKw": 6 }
+    ]
+  },
+  {
+    "id": "fiat-500e",
+    "make": "Fiat",
+    "model": "500e 42 kWh",
+    "batteryKwh": 37.3,
+    "baseConsumptionWhPerKm": 145,
+    "maxDcPowerKw": 85,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 70 },
+      { "socPct": 10, "powerKw": 85 },
+      { "socPct": 40, "powerKw": 70 },
+      { "socPct": 65, "powerKw": 45 },
+      { "socPct": 85, "powerKw": 25 },
+      { "socPct": 100, "powerKw": 6 }
+    ]
+  },
+  {
+    "id": "volvo-ex30",
+    "make": "Volvo",
+    "model": "EX30 Extended Range",
+    "batteryKwh": 65,
+    "baseConsumptionWhPerKm": 155,
+    "maxDcPowerKw": 153,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 120 },
+      { "socPct": 10, "powerKw": 153 },
+      { "socPct": 35, "powerKw": 130 },
+      { "socPct": 55, "powerKw": 90 },
+      { "socPct": 75, "powerKw": 55 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "volvo-ex40",
+    "make": "Volvo",
+    "model": "EX40 Single Motor ER",
+    "batteryKwh": 78,
+    "baseConsumptionWhPerKm": 180,
+    "maxDcPowerKw": 200,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 150 },
+      { "socPct": 10, "powerKw": 200 },
+      { "socPct": 35, "powerKw": 160 },
+      { "socPct": 55, "powerKw": 105 },
+      { "socPct": 80, "powerKw": 55 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "polestar-2-lr",
+    "make": "Polestar",
+    "model": "2 Long Range Single Motor",
+    "batteryKwh": 79,
+    "baseConsumptionWhPerKm": 165,
+    "maxDcPowerKw": 205,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 155 },
+      { "socPct": 10, "powerKw": 205 },
+      { "socPct": 35, "powerKw": 165 },
+      { "socPct": 55, "powerKw": 110 },
+      { "socPct": 80, "powerKw": 55 },
+      { "socPct": 100, "powerKw": 8 }
+    ]
+  },
+  {
+    "id": "mg4-64",
+    "make": "MG",
+    "model": "MG4 Extended Range 64 kWh",
+    "batteryKwh": 61.7,
+    "baseConsumptionWhPerKm": 158,
+    "maxDcPowerKw": 140,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 110 },
+      { "socPct": 10, "powerKw": 140 },
+      { "socPct": 35, "powerKw": 115 },
+      { "socPct": 55, "powerKw": 80 },
+      { "socPct": 80, "powerKw": 40 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "byd-atto3",
+    "make": "BYD",
+    "model": "Atto 3",
+    "batteryKwh": 60.5,
+    "baseConsumptionWhPerKm": 180,
+    "maxDcPowerKw": 88,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 75 },
+      { "socPct": 15, "powerKw": 88 },
+      { "socPct": 50, "powerKw": 75 },
+      { "socPct": 70, "powerKw": 50 },
+      { "socPct": 85, "powerKw": 28 },
+      { "socPct": 100, "powerKw": 6 }
+    ]
+  },
+  {
+    "id": "byd-seal-awd",
+    "make": "BYD",
+    "model": "Seal AWD 82.5 kWh",
+    "batteryKwh": 82.5,
+    "baseConsumptionWhPerKm": 172,
+    "maxDcPowerKw": 150,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 120 },
+      { "socPct": 15, "powerKw": 150 },
+      { "socPct": 45, "powerKw": 125 },
+      { "socPct": 65, "powerKw": 85 },
+      { "socPct": 85, "powerKw": 40 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  },
+  {
+    "id": "cupra-born-58",
+    "make": "Cupra",
+    "model": "Born 58 kWh",
+    "batteryKwh": 58,
+    "baseConsumptionWhPerKm": 162,
+    "maxDcPowerKw": 120,
+    "maxAcPowerKw": 11,
+    "connectors": ["ccs", "type2"],
+    "chargeCurve": [
+      { "socPct": 0, "powerKw": 100 },
+      { "socPct": 10, "powerKw": 120 },
+      { "socPct": 35, "powerKw": 110 },
+      { "socPct": 55, "powerKw": 75 },
+      { "socPct": 70, "powerKw": 55 },
+      { "socPct": 85, "powerKw": 30 },
+      { "socPct": 100, "powerKw": 7 }
+    ]
+  }
+]
