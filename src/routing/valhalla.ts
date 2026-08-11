@@ -47,13 +47,16 @@ interface ValhallaLeg {
   summary: { length: number; time: number };
 }
 
+interface ValhallaTrip {
+  legs: ValhallaLeg[];
+  summary: { length: number; time: number; has_toll?: boolean };
+  status?: number;
+  status_message?: string;
+}
+
 interface ValhallaResponse {
-  trip?: {
-    legs: ValhallaLeg[];
-    summary: { length: number; time: number; has_toll?: boolean };
-    status?: number;
-    status_message?: string;
-  };
+  trip?: ValhallaTrip;
+  alternates?: { trip: ValhallaTrip }[];
   error?: string;
   error_code?: number;
 }
@@ -62,6 +65,12 @@ export class ValhallaProvider implements RoutingProvider {
   constructor(private env: Env) {}
 
   async route(waypoints: LatLon[], opts: RouteOptions = {}): Promise<RouteResult> {
+    const [primary] = await this.routes(waypoints, { ...opts, alternates: 0 });
+    if (!primary) throw new Error('Valhalla не повернув маршрут');
+    return primary;
+  }
+
+  async routes(waypoints: LatLon[], opts: RouteOptions = {}): Promise<RouteResult[]> {
     if (waypoints.length < 2) throw new Error('Потрібно щонайменше дві точки маршруту');
 
     const elevationIntervalM = opts.elevationIntervalM ?? 0;
@@ -79,6 +88,8 @@ export class ValhallaProvider implements RoutingProvider {
       directions_options: { units: 'kilometers' },
       directions_type: 'maneuvers',
       ...(elevationIntervalM > 0 ? { elevation_interval: elevationIntervalM } : {}),
+      // Valhalla не гарантує, що дасть саме стільки альтернатив — інколи жодної.
+      ...(opts.alternates ? { alternates: opts.alternates } : {}),
     };
 
     const key = await cacheKey(payload);
@@ -89,7 +100,9 @@ export class ValhallaProvider implements RoutingProvider {
     if (!trip) {
       throw new Error(data.error ?? 'Valhalla не повернув маршрут');
     }
-    return this.toRouteResult(trip, elevationIntervalM);
+
+    const trips = [trip, ...(data.alternates ?? []).map((a) => a.trip).filter(Boolean)];
+    return trips.map((t) => this.toRouteResult(t, elevationIntervalM));
   }
 
   private async fetchRoute(
@@ -127,10 +140,7 @@ export class ValhallaProvider implements RoutingProvider {
     return data;
   }
 
-  private toRouteResult(
-    trip: NonNullable<ValhallaResponse['trip']>,
-    elevationIntervalM: number,
-  ): RouteResult {
+  private toRouteResult(trip: ValhallaTrip, elevationIntervalM: number): RouteResult {
     const points: RoutePoint[] = [];
     const waypointDistancesKm: number[] = [0];
     let cumulativeKm = 0;

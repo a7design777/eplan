@@ -81,7 +81,19 @@ export interface Station {
   accessType: AccessType | null;
 }
 
+/**
+ * Як користувач хоче їхати.
+ * - `fewest_stops` — менше зупинок, але довших: заряджаємось високо і їдемо далі.
+ * - `balanced` — компроміс за замовчуванням.
+ * - `short_stops` — часті короткі зупинки в найшвидшій частині кривої зарядки;
+ *   сумарно зазвичай швидше, але вимагає щільної мережі станцій.
+ */
+export type ChargingStrategy = 'fewest_stops' | 'balanced' | 'short_stops';
+
 export interface PlanFilters {
+  /** Мережі, яким віддаємо перевагу при однаковій зручності. */
+  preferredNetworkIds: number[];
+  chargingStrategy: ChargingStrategy;
   /** Прийнятні типи конекторів. Порожньо = будь-який з тих, що є в авто. */
   connectors: ConnectorType[];
   /** id мереж, які не використовувати. */
@@ -154,4 +166,6 @@ export interface PlanResponse {
   primary: RoutePlan;
   /** Альтернатива без платних доріг, якщо основний маршрут платний. */
   tollFree: RoutePlan | null;
+  /** Інші варіанти проїзду від рушія — інші дороги, не інші зарядки. */
+  alternatives: RoutePlan[];
 }

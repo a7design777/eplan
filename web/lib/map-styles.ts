@@ -33,28 +33,13 @@ const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 
 export const MAP_STYLES: MapStyle[] = [
   {
-    id: 'liberty',
-    label: 'Звичайна',
-    style: 'https://tiles.openfreemap.org/styles/liberty',
+    id: 'terrain',
+    label: 'Рельєф',
+    style: rasterStyle(
+      `${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`,
+      'Esri, USGS, NOAA',
+    ),
     dark: false,
-  },
-  {
-    id: 'bright',
-    label: 'Яскрава',
-    style: 'https://tiles.openfreemap.org/styles/bright',
-    dark: false,
-  },
-  {
-    id: 'positron',
-    label: 'Спокійна',
-    style: 'https://tiles.openfreemap.org/styles/positron',
-    dark: false,
-  },
-  {
-    id: 'dark',
-    label: 'Темна',
-    style: 'https://tiles.openfreemap.org/styles/dark',
-    dark: true,
   },
   {
     id: 'satellite',
@@ -64,15 +49,6 @@ export const MAP_STYLES: MapStyle[] = [
       'Esri, Maxar, Earthstar Geographics',
     ),
     dark: true,
-  },
-  {
-    id: 'terrain',
-    label: 'Рельєф',
-    style: rasterStyle(
-      `${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`,
-      'Esri, USGS, NOAA',
-    ),
-    dark: false,
   },
 ];
 

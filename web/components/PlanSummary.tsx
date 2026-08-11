@@ -1,5 +1,5 @@
 import type { LatLon, RoutePlan } from '../../src/types';
-import { googleMapsPointLink, googleMapsRouteLinks, wazeLink } from '../lib/links';
+import { googleMapsPointLink, googleMapsRouteLinks, wazeLegs, wazeLink } from '../lib/links';
 import { paymentHint, priceLabel } from '../lib/payment';
 
 const fmtDuration = (min: number): string => {
@@ -15,6 +15,13 @@ export function PlanSummary({ plan }: { plan: RoutePlan }) {
     plan.waypoints[plan.waypoints.length - 1]!,
   ];
   const gmapsLinks = googleMapsRouteLinks(routePoints);
+
+  const legLabels = [
+    plan.waypoints[0]?.name ?? 'Старт',
+    ...plan.stops.map((s, i) => `${i + 1}. ${s.station.name}`),
+    plan.waypoints[plan.waypoints.length - 1]?.name ?? 'Фініш',
+  ];
+  const legs = wazeLegs(routePoints, legLabels);
 
   return (
     <>
@@ -53,6 +60,29 @@ export function PlanSummary({ plan }: { plan: RoutePlan }) {
           <div className="muted">
             Google Maps тримає максимум 9 проміжних точок, тому маршрут розбито на частини.
           </div>
+        )}
+
+        {legs.length > 0 && (
+          <details className="waze-legs">
+            <summary>Waze — по відрізках ({legs.length})</summary>
+            <div>
+              <div className="muted">
+                Waze приймає лише одну ціль за раз, тому маршрут розбито на відрізки:
+                доїхали до зарядки — відкриваєте наступний.
+              </div>
+              {legs.map((leg, i) => (
+                <a
+                  key={leg.waze + i}
+                  className="link-btn leg"
+                  href={leg.waze}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {i + 1}. {leg.label}
+                </a>
+              ))}
+            </div>
+          </details>
         )}
       </div>
 

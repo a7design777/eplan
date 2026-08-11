@@ -24,6 +24,8 @@ const vehicle: Vehicle = {
 const filters: PlanFilters = {
   connectors: [],
   excludedNetworkIds: [],
+  preferredNetworkIds: [],
+  chargingStrategy: 'balanced',
   freeOnly: false,
   minPowerKw: 50,
   reserveSocPct: 10,
@@ -152,6 +154,75 @@ describe('selectStops', () => {
     const r = selectStops(candidates, points, cum, request());
     const distances = r.stops.map((s) => s.candidate.distanceKm);
     expect([...distances].sort((a, b) => a - b)).toEqual(distances);
+  });
+});
+
+describe('стратегії зарядки', () => {
+  const points = straightRoute(700);
+  const cum = cumulativeEnergyKwh(points, vehicle, { temperatureC: 20 });
+  // Щільна мережа: станція кожні 25 км, щоб стратегія мала з чого обирати.
+  const candidates = projectStations(
+    Array.from({ length: 27 }, (_, i) => stationAt(i + 1, (i + 1) * 25)),
+    points,
+    5,
+  );
+
+  const planWith = (strategy: PlanFilters['chargingStrategy']) => {
+    const req = request({ filters: { ...filters, chargingStrategy: strategy } });
+    const sel = selectStops(candidates, points, cum, req);
+    return { sel, trimmed: trimStops(sel.stops, points, cum, req) };
+  };
+
+  it('«менше зупинок» дає не більше зупинок, ніж «часті короткі»', () => {
+    const few = planWith('fewest_stops');
+    const many = planWith('short_stops');
+    expect(few.sel.stops.length).toBeLessThanOrEqual(many.sel.stops.length);
+  });
+
+  it('«часті короткі» тримає відрізки коротшими', () => {
+    const few = planWith('fewest_stops').sel.stops.map((s) => s.candidate.distanceKm);
+    const many = planWith('short_stops').sel.stops.map((s) => s.candidate.distanceKm);
+    const maxLeg = (d: number[]) =>
+      Math.max(...d.map((km, i) => km - (i === 0 ? 0 : d[i - 1]!)));
+    if (few.length > 0 && many.length > 0) {
+      expect(maxLeg(many)).toBeLessThan(maxLeg(few));
+    }
+  });
+
+  it('«часті короткі» не заряджає високо на проміжних зупинках', () => {
+    const { trimmed } = planWith('short_stops');
+    // Остання зупинка може бути вищою — там діє цільовий SoC користувача.
+    for (const s of trimmed.stops.slice(0, -1)) {
+      expect(s.departureSocPct).toBeLessThanOrEqual(71);
+    }
+  });
+
+  it('усі стратегії доводять маршрут до фінішу', () => {
+    for (const s of ['fewest_stops', 'balanced', 'short_stops'] as const) {
+      const { sel, trimmed } = planWith(s);
+      expect(sel.unreachable).toBe(false);
+      expect(trimmed.arrivalSocPct).not.toBeNull();
+    }
+  });
+});
+
+describe('улюблені мережі', () => {
+  const points = straightRoute(400);
+  const cum = cumulativeEnergyKwh(points, vehicle, { temperatureC: 20 });
+
+  it('за інших рівних обирається станція улюбленої мережі', () => {
+    // Дві станції поруч і однакової потужності, різні мережі.
+    const a = { ...stationAt(1, 200), networkId: 10, networkName: 'A' };
+    const b = { ...stationAt(2, 205), networkId: 20, networkName: 'B' };
+    const candidates = projectStations([a, b], points, 5);
+
+    const pick = (preferred: number[]) => {
+      const req = request({ filters: { ...filters, preferredNetworkIds: preferred } });
+      return selectStops(candidates, points, cum, req).stops[0]?.candidate.station.networkId;
+    };
+
+    expect(pick([10])).toBe(10);
+    expect(pick([20])).toBe(20);
   });
 });
 

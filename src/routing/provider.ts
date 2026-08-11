@@ -5,6 +5,8 @@ export interface RouteOptions {
   excludeTolls?: boolean;
   /** Крок профілю висот, м. 0 — не запитувати висоти. */
   elevationIntervalM?: number;
+  /** Скільки додаткових варіантів проїзду просити в рушія. */
+  alternates?: number;
 }
 
 export interface RouteResult {
@@ -24,4 +26,6 @@ export interface RouteResult {
  */
 export interface RoutingProvider {
   route(waypoints: LatLon[], opts?: RouteOptions): Promise<RouteResult>;
+  /** Основний маршрут плюс альтернативні, якщо рушій їх дав. Перший — основний. */
+  routes(waypoints: LatLon[], opts?: RouteOptions): Promise<RouteResult[]>;
 }

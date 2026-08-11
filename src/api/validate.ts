@@ -1,4 +1,11 @@
-import type { ConnectorType, PlanFilters, PlanRequest, Vehicle, Waypoint } from '../types';
+import type {
+  ChargingStrategy,
+  ConnectorType,
+  PlanFilters,
+  PlanRequest,
+  Vehicle,
+  Waypoint,
+} from '../types';
 
 export class ValidationError extends Error {}
 
@@ -78,12 +85,26 @@ export function parseVehicle(v: unknown): Vehicle {
   };
 }
 
+const STRATEGIES: ChargingStrategy[] = ['fewest_stops', 'balanced', 'short_stops'];
+
 function parseFilters(v: unknown): PlanFilters {
   const f = isRecord(v) ? v : {};
   const excludedRaw = Array.isArray(f.excludedNetworkIds) ? f.excludedNetworkIds : [];
   if (excludedRaw.length > 200) throw new ValidationError('Забагато виключених мереж');
 
+  const preferredRaw = Array.isArray(f.preferredNetworkIds) ? f.preferredNetworkIds : [];
+  if (preferredRaw.length > 200) throw new ValidationError('Забагато улюблених мереж');
+
+  const strategy = f.chargingStrategy ?? 'balanced';
+  if (typeof strategy !== 'string' || !STRATEGIES.includes(strategy as ChargingStrategy)) {
+    throw new ValidationError(`Невідома стратегія зарядки: ${String(strategy)}`);
+  }
+
   return {
+    preferredNetworkIds: preferredRaw.map((id, i) =>
+      num(id, `filters.preferredNetworkIds[${i}]`, 0, 1e9),
+    ),
+    chargingStrategy: strategy as ChargingStrategy,
     connectors: connectorList(f.connectors, 'filters.connectors'),
     excludedNetworkIds: excludedRaw.map((id, i) =>
       num(id, `filters.excludedNetworkIds[${i}]`, 0, 1e9),

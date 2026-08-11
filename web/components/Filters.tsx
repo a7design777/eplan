@@ -1,6 +1,12 @@
-import type { ConnectorType, PlanFilters } from '../../src/types';
+import type { ChargingStrategy, ConnectorType, PlanFilters } from '../../src/types';
 import type { NetworkInfo } from '../api';
 import { CONNECTOR_LABELS } from '../lib/connectors';
+
+const STRATEGIES: { id: ChargingStrategy; label: string; hint: string }[] = [
+  { id: 'fewest_stops', label: 'Менше зупинок', hint: 'Їхати якнайдалі, заряджатись до 95 %' },
+  { id: 'balanced', label: 'Збалансовано', hint: 'Компроміс між кількістю зупинок і часом' },
+  { id: 'short_stops', label: 'Часті короткі', hint: 'Кожні ~130 км до 70 % — найшвидша частина кривої' },
+];
 
 interface Props {
   filters: PlanFilters;
@@ -21,13 +27,48 @@ export function Filters({ filters, networks, vehicleConnectors, onChange }: Prop
     const next = filters.excludedNetworkIds.includes(id)
       ? filters.excludedNetworkIds.filter((x) => x !== id)
       : [...filters.excludedNetworkIds, id];
-    onChange({ excludedNetworkIds: next });
+    // Не можна одночасно любити мережу і виключати її.
+    onChange({
+      excludedNetworkIds: next,
+      preferredNetworkIds: filters.preferredNetworkIds.filter((x) => !next.includes(x)),
+    });
+  };
+
+  const toggleFavourite = (id: number) => {
+    const next = filters.preferredNetworkIds.includes(id)
+      ? filters.preferredNetworkIds.filter((x) => x !== id)
+      : [...filters.preferredNetworkIds, id];
+    onChange({
+      preferredNetworkIds: next,
+      excludedNetworkIds: filters.excludedNetworkIds.filter((x) => !next.includes(x)),
+    });
   };
 
   return (
     <details className="filters">
       <summary>Фільтри та умови</summary>
       <div>
+        <div className="field">
+          <label>Як їхати</label>
+          <div className="chips">
+            {STRATEGIES.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="chip"
+                title={s.hint}
+                aria-pressed={filters.chargingStrategy === s.id}
+                onClick={() => onChange({ chargingStrategy: s.id })}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <span className="muted">
+            {STRATEGIES.find((s) => s.id === filters.chargingStrategy)?.hint}
+          </span>
+        </div>
+
         <div className="field">
           <label>Конектори {filters.connectors.length === 0 && '(усі доступні авто)'}</label>
           <div className="chips">
@@ -120,20 +161,38 @@ export function Filters({ filters, networks, vehicleConnectors, onChange }: Prop
         {networks.length > 0 && (
           <div className="field">
             <label>
-              Не використовувати мережі
-              {filters.excludedNetworkIds.length > 0 && ` (${filters.excludedNetworkIds.length})`}
+              Мережі — ★ улюблені, ✓ виключити
+              {filters.preferredNetworkIds.length > 0 &&
+                ` · улюблених ${filters.preferredNetworkIds.length}`}
+              {filters.excludedNetworkIds.length > 0 &&
+                ` · виключено ${filters.excludedNetworkIds.length}`}
             </label>
             <div className="network-list">
               {networks.map((n) => (
-                <label className="check" key={n.id}>
-                  <input
-                    type="checkbox"
-                    checked={filters.excludedNetworkIds.includes(n.id)}
-                    onChange={() => toggleNetwork(n.id)}
-                  />
-                  {n.name}
-                  <span className="count">{n.station_count}</span>
-                </label>
+                <div className="network-row" key={n.id}>
+                  <button
+                    type="button"
+                    className="star"
+                    title={
+                      filters.preferredNetworkIds.includes(n.id)
+                        ? 'Прибрати з улюблених'
+                        : 'Віддавати перевагу цій мережі'
+                    }
+                    aria-pressed={filters.preferredNetworkIds.includes(n.id)}
+                    onClick={() => toggleFavourite(n.id)}
+                  >
+                    {filters.preferredNetworkIds.includes(n.id) ? '★' : '☆'}
+                  </button>
+                  <label className="check">
+                    <input
+                      type="checkbox"
+                      checked={filters.excludedNetworkIds.includes(n.id)}
+                      onChange={() => toggleNetwork(n.id)}
+                    />
+                    {n.name}
+                    <span className="count">{n.station_count}</span>
+                  </label>
+                </div>
               ))}
             </div>
           </div>

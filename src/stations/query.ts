@@ -43,6 +43,47 @@ function toStation(r: StationRowDb): Station {
   };
 }
 
+export interface BboxQuery {
+  minLat: number;
+  maxLat: number;
+  minLon: number;
+  maxLon: number;
+  networkIds: number[];
+  minPowerKw: number;
+  limit: number;
+}
+
+/**
+ * Станції у видимій частині мапи. Окремий шлях від планування: тут потрібен
+ * простий прямокутник, а не коридор, і завжди стоїть жорсткий ліміт —
+ * інакше на дрібному масштабі в браузер поїдуть десятки тисяч точок.
+ */
+export async function stationsInBbox(env: Env, q: BboxQuery): Promise<Station[]> {
+  const conditions = ['s.lat BETWEEN ? AND ?', 's.lon BETWEEN ? AND ?', 's.max_power_kw >= ?'];
+  const params: unknown[] = [q.minLat, q.maxLat, q.minLon, q.maxLon, q.minPowerKw];
+
+  // id мереж уже провалідовані як числа, тому вбудовуємо їх у SQL:
+  // список буває довгим і разом з рештою вилазить за ліміт параметрів D1.
+  if (q.networkIds.length > 0) {
+    conditions.push(`s.network_id IN (${q.networkIds.map((id) => Math.trunc(id)).join(',')})`);
+  }
+
+  const { results } = await env.DB.prepare(
+    `SELECT s.id, s.name, s.lat, s.lon, s.max_power_kw, s.connectors, s.network_id,
+            n.name AS network_name, s.is_free, s.port_count, s.country_code, s.address,
+            s.usage_cost, s.access_type
+     FROM stations s
+     LEFT JOIN networks n ON n.id = s.network_id
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY s.max_power_kw DESC
+     LIMIT ?`,
+  )
+    .bind(...params, q.limit)
+    .all<StationRowDb>();
+
+  return (results ?? []).map(toStation);
+}
+
 /**
  * Станції в коридорі навколо маршруту, вже відфільтровані під запит користувача.
  *

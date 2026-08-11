@@ -1,5 +1,6 @@
 import type {
   ChargeStop,
+  ChargingStrategy,
   Env,
   PlanRequest,
   RoutePlan,
@@ -13,14 +14,38 @@ import { chargeTime, requiredSocPct } from './charge-curve';
 import { cumulativeEnergyKwh, energyAtDistanceKwh } from './consumption';
 import type { RouteResult, RoutingProvider } from './provider';
 
-/** Понад цей SoC зарядка стає настільки повільною, що вигідніше зупинитись ще раз. */
-const CHARGE_CEILING_PCT = 85;
 /** Під'їзд, підключення, оплата — фіксована накладна на кожну зупинку. */
 const STOP_OVERHEAD_MIN = 5;
-/** Мінімальний крок між зупинками, щоб не ставити дві зарядки поруч. */
-const MIN_LEG_KM = 25;
 /** Крок профілю висот у запиті до рушія, м. */
 const ELEVATION_INTERVAL_M = 100;
+
+interface StrategyParams {
+  /** До якого SoC заряджаємось, коли попереду ще одна зупинка. */
+  chargeCeilingPct: number;
+  /** Мінімальна відстань між зупинками, км. */
+  minLegKm: number;
+  /**
+   * Бажана довжина відрізка, км. null — їхати якнайдалі.
+   * Задана — шукаємо зарядку саме біля цієї позначки.
+   */
+  targetLegKm: number | null;
+}
+
+/**
+ * Верхні відсотки заряду набираються найповільніше, тому «менше зупинок»
+ * і «швидше доїхати» — різні цілі. Стратегія обирає компроміс.
+ */
+export function strategyParams(strategy: ChargingStrategy): StrategyParams {
+  switch (strategy) {
+    case 'fewest_stops':
+      return { chargeCeilingPct: 95, minLegKm: 40, targetLegKm: null };
+    case 'short_stops':
+      // 70 % — приблизно там, де більшість авто ще тримає високу потужність.
+      return { chargeCeilingPct: 70, minLegKm: 60, targetLegKm: 130 };
+    default:
+      return { chargeCeilingPct: 85, minLegKm: 25, targetLegKm: null };
+  }
+}
 
 interface Candidate {
   station: Station;
@@ -53,14 +78,32 @@ export function projectStations(
  * потрібне коштує зайвого часу на всьому маршруті. Далі йде потужність, бо саме
  * вона визначає час стоянки. Об'їзд штрафується подвійно — туди й назад.
  */
-function score(c: Candidate, windowStartKm: number, windowEndKm: number): number {
+function score(
+  c: Candidate,
+  windowStartKm: number,
+  windowEndKm: number,
+  params: StrategyParams,
+  preferredNetworkIds: number[],
+): number {
   const span = Math.max(1, windowEndKm - windowStartKm);
-  const progress = (c.distanceKm - windowStartKm) / span;
   const power = Math.min(1, c.station.maxPowerKw / 200);
   const detourPenalty = c.detourKm / 5;
   const freeBonus = c.station.isFree ? 0.15 : 0;
   const portBonus = Math.min(0.1, c.station.portCount / 80);
-  return progress * 1.6 + power * 0.9 + freeBonus + portBonus - detourPenalty * 0.7;
+  const favouriteBonus =
+    c.station.networkId !== null && preferredNetworkIds.includes(c.station.networkId) ? 0.8 : 0;
+
+  // При «частих коротких» їхати якнайдалі не треба — цінна зарядка біля позначки.
+  let placement: number;
+  if (params.targetLegKm !== null) {
+    const wanted = windowStartKm + params.targetLegKm;
+    const miss = Math.abs(c.distanceKm - wanted) / params.targetLegKm;
+    placement = Math.max(0, 1 - miss);
+  } else {
+    placement = (c.distanceKm - windowStartKm) / span;
+  }
+
+  return placement * 1.6 + power * 0.9 + freeBonus + portBonus + favouriteBonus - detourPenalty * 0.7;
 }
 
 interface SelectedStop {
@@ -80,6 +123,7 @@ export function selectStops(
   req: PlanRequest,
 ): { stops: SelectedStop[]; unreachable: boolean; warnings: string[] } {
   const { vehicle, filters } = req;
+  const params = strategyParams(filters.chargingStrategy);
   const totalKm = points[points.length - 1]?.distanceKm ?? 0;
   const warnings: string[] = [];
   const stops: SelectedStop[] = [];
@@ -107,7 +151,7 @@ export function selectStops(
     const reachEnergyKwh = energyAtStart + usableKwh;
     const maxReachKm = distanceForEnergy(points, cumulative, reachEnergyKwh, totalKm);
 
-    const windowStartKm = atKm + MIN_LEG_KM;
+    const windowStartKm = atKm + params.minLegKm;
     const inWindow = candidates.filter(
       (c) =>
         c.distanceKm > windowStartKm &&
@@ -120,7 +164,7 @@ export function selectStops(
     );
 
     if (inWindow.length === 0) {
-      // Пробуємо ще раз без відступу MIN_LEG_KM — на випадок дуже щільного старту.
+      // Пробуємо ще раз без мінімального відступу — на випадок рідкої мережі.
       const relaxed = candidates.filter(
         (c) => c.distanceKm > atKm + 1 && c.distanceKm <= maxReachKm,
       );
@@ -136,7 +180,7 @@ export function selectStops(
     let best = inWindow[0]!;
     let bestScore = -Infinity;
     for (const c of inWindow) {
-      const s = score(c, atKm, maxReachKm);
+      const s = score(c, atKm, maxReachKm, params, filters.preferredNetworkIds);
       if (s > bestScore) {
         bestScore = s;
         best = c;
@@ -152,7 +196,7 @@ export function selectStops(
     stops.push({ candidate: best, arrivalSocPct });
 
     // На етапі вибору заряджаємо «зі стелею» — точні рівні порахує trimStops.
-    socPct = CHARGE_CEILING_PCT;
+    socPct = params.chargeCeilingPct;
     atKm = best.distanceKm;
   }
 
@@ -198,6 +242,7 @@ export function trimStops(
   req: PlanRequest,
 ): { stops: ChargeStop[]; arrivalSocPct: number | null; warnings: string[] } {
   const { vehicle, filters } = req;
+  const params = strategyParams(filters.chargingStrategy);
   const totalKm = points[points.length - 1]?.distanceKm ?? 0;
   const warnings: string[] = [];
   const stops: ChargeStop[] = [];
@@ -223,7 +268,10 @@ export function trimStops(
     // На фініші треба не резерв, а цільовий SoC користувача.
     const reserveForLeg = next ? filters.reserveSocPct : req.targetSocPct;
     let targetSoc = requiredSocPct(vehicle, legKwh, reserveForLeg);
-    targetSoc = Math.min(100, Math.max(targetSoc, arrivalSocPct));
+    // Стеля стратегії діє лише поки попереду ще є зупинки: на останній треба
+    // набрати рівно стільки, скільки просив користувач, хай навіть це 100 %.
+    const ceiling = next ? Math.max(params.chargeCeilingPct, targetSoc) : 100;
+    targetSoc = Math.min(ceiling, Math.max(targetSoc, arrivalSocPct));
 
     const stationPowerKw = cur.candidate.station.maxPowerKw;
     const result = chargeTime(vehicle, arrivalSocPct, targetSoc, stationPowerKw);
@@ -314,21 +362,33 @@ export async function planForRoute(
   };
 }
 
-/** Точка входу: рахує основний маршрут і, за потреби, безплатну альтернативу. */
+/** Скільки альтернативних варіантів проїзду просити в рушія. */
+const ALTERNATE_ROUTES = 2;
+
+/** Точка входу: основний маршрут, альтернативні варіанти і обхід платних доріг. */
 export async function plan(
   env: Env,
   provider: RoutingProvider,
   req: PlanRequest,
-): Promise<{ primary: RoutePlan; tollFree: RoutePlan | null }> {
-  const route = await provider.route(req.waypoints, {
+): Promise<{ primary: RoutePlan; tollFree: RoutePlan | null; alternatives: RoutePlan[] }> {
+  const routes = await provider.routes(req.waypoints, {
     excludeTolls: req.filters.avoidTolls,
     elevationIntervalM: ELEVATION_INTERVAL_M,
+    alternates: ALTERNATE_ROUTES,
   });
-  const primary = await planForRoute(env, route, req);
 
-  // Альтернативу рахуємо лише коли є що обходити і користувач ще не попросив обхід.
+  const [mainRoute, ...alternateRoutes] = routes;
+  if (!mainRoute) throw new Error('Не вдалося прокласти маршрут');
+
+  const primary = await planForRoute(env, mainRoute, req);
+  const alternatives: RoutePlan[] = [];
+  for (const r of alternateRoutes) {
+    alternatives.push(await planForRoute(env, r, req));
+  }
+
+  // Обхід платних рахуємо лише коли є що обходити і користувач ще не попросив обхід.
   if (!primary.tolls.hasTolls || req.filters.avoidTolls) {
-    return { primary, tollFree: null };
+    return { primary, tollFree: null, alternatives };
   }
 
   try {
@@ -337,9 +397,9 @@ export async function plan(
       elevationIntervalM: ELEVATION_INTERVAL_M,
     });
     const tollFree = await planForRoute(env, freeRoute, req);
-    return { primary, tollFree };
+    return { primary, tollFree, alternatives };
   } catch {
-    // Без платних доріг маршрут може не існувати — це нормально, просто немає альтернативи.
-    return { primary, tollFree: null };
+    // Без платних доріг маршрут може не існувати — це нормально.
+    return { primary, tollFree: null, alternatives };
   }
 }

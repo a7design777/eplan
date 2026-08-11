@@ -1,16 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api, type AuthUser, type NetworkInfo, type SavedRouteSummary } from './api';
+import { api, type AuthUser, type Bbox, type NetworkInfo, type SavedRouteSummary } from './api';
 import { MapView } from './components/MapView';
 import { WaypointInput } from './components/WaypointInput';
 import { PlanSummary } from './components/PlanSummary';
 import { Filters } from './components/Filters';
 import { VehiclePicker } from './components/VehiclePicker';
 import { AuthDialog } from './components/AuthDialog';
-import type { PlanFilters, PlanRequest, PlanResponse, Vehicle, Waypoint } from '../src/types';
+import type {
+  PlanFilters,
+  PlanRequest,
+  PlanResponse,
+  RoutePlan as RoutePlanView,
+  Station,
+  Vehicle,
+  Waypoint,
+} from '../src/types';
 
 const DEFAULT_FILTERS: PlanFilters = {
   connectors: [],
   excludedNetworkIds: [],
+  preferredNetworkIds: [],
+  chargingStrategy: 'balanced',
   freeOnly: false,
   minPowerKw: 50,
   reserveSocPct: 10,
@@ -30,7 +40,11 @@ export function App() {
   const [filters, setFilters] = useState<PlanFilters>(DEFAULT_FILTERS);
 
   const [result, setResult] = useState<PlanResponse | null>(null);
-  const [variant, setVariant] = useState<'primary' | 'tollFree'>('primary');
+  const [variant, setVariant] = useState<string>('primary');
+
+  const [showStations, setShowStations] = useState(false);
+  const [browseStations, setBrowseStations] = useState<Station[]>([]);
+  const [bbox, setBbox] = useState<Bbox | null>(null);
   const [planning, setPlanning] = useState(false);
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +74,30 @@ export function App() {
   useEffect(refreshSaved, [refreshSaved]);
 
   const waypoints = useMemo(() => slots.filter((s): s is Waypoint => s !== null), [slots]);
+
+  /**
+   * Шар станцій на мапі. Показуємо мережі, обрані як улюблені; якщо жодної
+   * не обрано — усі, що влазять у ліміт. Запит іде на кожен рух мапи, тому
+   * вимкнений шар не має коштувати нічого.
+   */
+  useEffect(() => {
+    if (!showStations || !bbox) {
+      setBrowseStations([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      api
+        .stations(bbox, filters.preferredNetworkIds, filters.minPowerKw)
+        .then((s) => !cancelled && setBrowseStations(s))
+        .catch(() => !cancelled && setBrowseStations([]));
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [showStations, bbox, filters.preferredNetworkIds, filters.minPowerKw]);
 
   /**
    * Клік по мапі заповнює перший порожній слот, а якщо порожніх немає —
@@ -203,8 +241,22 @@ export function App() {
     }
   };
 
+  const variants = useMemo(() => {
+    if (!result) return [];
+    const list: { id: string; label: string; plan: RoutePlanView }[] = [
+      { id: 'primary', label: 'Основний', plan: result.primary },
+    ];
+    if (result.tollFree) {
+      list.push({ id: 'tollFree', label: 'Без платних доріг', plan: result.tollFree });
+    }
+    result.alternatives.forEach((p, i) => {
+      list.push({ id: `alt${i}`, label: `Варіант ${i + 2}`, plan: p });
+    });
+    return list;
+  }, [result]);
+
   const shownPlan =
-    variant === 'tollFree' && result?.tollFree ? result.tollFree : result?.primary ?? null;
+    variants.find((v) => v.id === variant)?.plan ?? result?.primary ?? null;
 
   return (
     <div className="app">
@@ -332,20 +384,18 @@ export function App() {
 
           {error && <div className="banner banner-error">{error}</div>}
 
-          {result?.tollFree && (
+          {variants.length > 1 && (
             <div className="tabs">
-              <button
-                aria-selected={variant === 'primary'}
-                onClick={() => setVariant('primary')}
-              >
-                Найшвидший
-              </button>
-              <button
-                aria-selected={variant === 'tollFree'}
-                onClick={() => setVariant('tollFree')}
-              >
-                Без платних доріг
-              </button>
+              {variants.map((v) => (
+                <button
+                  key={v.id}
+                  aria-selected={variant === v.id}
+                  title={`${Math.round(v.plan.totalDurationMin / 60)} год · ${Math.round(v.plan.totalDistanceKm)} км`}
+                  onClick={() => setVariant(v.id)}
+                >
+                  {v.label}
+                </button>
+              ))}
             </div>
           )}
 
@@ -387,12 +437,26 @@ export function App() {
         <MapView
           plan={shownPlan}
           waypoints={waypoints}
+          browseStations={browseStations}
+          onViewportChange={setBbox}
           onPickPoint={pickPoint}
           onMovePoint={movePoint}
         />
         <div className="map-hint">
           Клікніть по мапі, щоб поставити точку · маркер можна перетягнути
         </div>
+        <button
+          className={`map-toggle${showStations ? ' on' : ''}`}
+          onClick={() => setShowStations((v) => !v)}
+          title={
+            filters.preferredNetworkIds.length > 0
+              ? 'Показати станції улюблених мереж'
+              : 'Показати станції (оберіть улюблені мережі у фільтрах, щоб звузити)'
+          }
+        >
+          {showStations ? '● Станції на мапі' : '○ Станції на мапі'}
+          {showStations && browseStations.length > 0 && ` (${browseStations.length})`}
+        </button>
       </div>
 
       {showAuth && (

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import type { Map as MlMap, Marker } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { RoutePlan, Waypoint } from '../../src/types';
+import type { RoutePlan, Station, Waypoint } from '../../src/types';
+import type { Bbox } from '../api';
 import { loadMapStyle, MAP_STYLES, saveMapStyle, type MapStyle } from '../lib/map-styles';
 import { paymentHint, priceLabel } from '../lib/payment';
 
@@ -15,13 +16,24 @@ const EMPTY_LINE = {
 interface Props {
   plan: RoutePlan | null;
   waypoints: Waypoint[];
+  /** Станції для окремого шару «показати мережі». Порожньо — шар вимкнено. */
+  browseStations: Station[];
+  /** Мапу зрушили — треба перезапитати станції під нові межі. */
+  onViewportChange: (b: Bbox) => void;
   /** Клік по вільному місцю мапи — додати точку маршруту. */
   onPickPoint: (lat: number, lon: number) => void;
   /** Маркер точки перетягнули на нове місце. */
   onMovePoint: (index: number, lat: number, lon: number) => void;
 }
 
-export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
+export function MapView({
+  plan,
+  waypoints,
+  browseStations,
+  onViewportChange,
+  onPickPoint,
+  onMovePoint,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
@@ -30,8 +42,10 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
 
   // Колбеки міняються на кожен рендер, а слухач мапи вішається раз — тримаємо
   // їх у ref, щоб не перепідписуватись і не пересоздавати мапу.
-  const handlersRef = useRef({ onPickPoint, onMovePoint });
-  handlersRef.current = { onPickPoint, onMovePoint };
+  const handlersRef = useRef({ onPickPoint, onMovePoint, onViewportChange });
+  handlersRef.current = { onPickPoint, onMovePoint, onViewportChange };
+
+  const browseMarkersRef = useRef<Marker[]>([]);
 
   const styleRef = useRef(style);
   styleRef.current = style;
@@ -75,6 +89,17 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
     map.on('click', onClick);
     map.getCanvas().style.cursor = 'crosshair';
 
+    const onMoveEnd = () => {
+      const b = map.getBounds();
+      handlersRef.current.onViewportChange({
+        minLat: b.getSouth(),
+        maxLat: b.getNorth(),
+        minLon: b.getWest(),
+        maxLon: b.getEast(),
+      });
+    };
+    map.on('moveend', onMoveEnd);
+
     // Контейнер міняє розмір разом із сайдбаром і при повороті екрана,
     // а maplibre сам за цим не стежить.
     const observer = new ResizeObserver(() => map.resize());
@@ -83,6 +108,7 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
     return () => {
       observer.disconnect();
       map.off('click', onClick);
+      map.off('moveend', onMoveEnd);
       map.remove();
       mapRef.current = null;
     };
@@ -156,6 +182,38 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
       map.off('styledata', render);
     };
   }, [plan, waypoints, style]);
+
+  // Шар «показати мережі» окремий від маршруту: він змінюється при кожному русі
+  // мапи, і перемальовувати через нього весь маршрут було б марно.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    for (const m of browseMarkersRef.current) m.remove();
+    browseMarkersRef.current = browseStations.map((s) => {
+      const el = document.createElement('div');
+      el.className = 'station-dot';
+      el.title = s.name;
+      const price = priceLabel(s);
+      return new maplibregl.Marker({ element: el })
+        .setLngLat([s.lon, s.lat])
+        .setPopup(
+          new maplibregl.Popup({ offset: 10, closeButton: false }).setHTML(
+            `<strong>${escapeHtml(s.name)}</strong><br/>` +
+              `${Math.round(s.maxPowerKw)} кВт · ${s.portCount} портів` +
+              (s.networkName ? `<br/>${escapeHtml(s.networkName)}` : '') +
+              `<br/>${escapeHtml(paymentHint(s))}` +
+              (price ? `<br/><strong>${escapeHtml(price)}</strong>` : ''),
+          ),
+        )
+        .addTo(map);
+    });
+
+    return () => {
+      for (const m of browseMarkersRef.current) m.remove();
+      browseMarkersRef.current = [];
+    };
+  }, [browseStations]);
 
   const appliedStyleRef = useRef(style.id);
   useEffect(() => {

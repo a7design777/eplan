@@ -10,6 +10,28 @@ export function wazeLink(p: LatLon): string {
   return `https://waze.com/ul?ll=${coord(p)}&navigate=yes`;
 }
 
+export interface RouteLeg {
+  /** Куди їхати на цьому відрізку. */
+  to: LatLon;
+  label: string;
+  waze: string;
+}
+
+/**
+ * Маршрут для Waze, розбитий на відрізки.
+ *
+ * Waze приймає лише одну ціль за посилання — multi-stop його URL-схема не тримає.
+ * Тому замість одного посилання даємо ланцюжок: доїхав до зарядки — відкрив наступне.
+ */
+export function wazeLegs(points: LatLon[], labels: string[]): RouteLeg[] {
+  const legs: RouteLeg[] = [];
+  for (let i = 1; i < points.length; i++) {
+    const to = points[i]!;
+    legs.push({ to, label: labels[i] ?? `Точка ${i}`, waze: wazeLink(to) });
+  }
+  return legs;
+}
+
 export function googleMapsPointLink(p: LatLon): string {
   return `https://www.google.com/maps/search/?api=1&query=${coord(p)}`;
 }

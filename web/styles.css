@@ -500,6 +500,27 @@ details.filters > div {
   gap: 6px;
 }
 
+.map-toggle {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.map-toggle.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 650;
+}
+
 .map-error {
   position: absolute;
   top: 50%;
@@ -698,6 +719,63 @@ details.filters > div {
 
 .marker-charge {
   background: var(--accent);
+}
+
+/* Точки шару «показати мережі» — дрібні, щоб не перекривали маршрут. */
+.station-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #1f6feb;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.network-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.network-row .check {
+  flex: 1;
+  min-width: 0;
+}
+
+.network-row .star {
+  flex: none;
+  width: 22px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 2px;
+}
+
+.network-row .star[aria-pressed='true'] {
+  color: #eab308;
+}
+
+details.waze-legs > summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+details.waze-legs > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+}
+
+.link-btn.leg {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .marker-waypoint {

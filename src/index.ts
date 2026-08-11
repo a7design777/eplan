@@ -6,6 +6,7 @@ import { parseCredentials, parsePlanRequest, ValidationError } from './api/valid
 import { plan } from './routing/planner';
 import { ValhallaProvider } from './routing/valhalla';
 import { importStations } from './stations/import';
+import { stationsInBbox } from './stations/query';
 import type { Env, Vehicle } from './types';
 
 type App = { Bindings: Env; Variables: { user: AuthUser } };
@@ -92,6 +93,41 @@ api.get('/reverse', async (c) => {
   const out = name ? { lat, lon, name } : fallback;
   await c.env.CACHE.put(key, JSON.stringify(out), { expirationTtl: 30 * 24 * 3600 });
   return c.json(out);
+});
+
+/** Станції у видимій частині мапи — для шару «показати мережі». */
+api.get('/stations', async (c) => {
+  const q = c.req.query();
+  const nums = ['minLat', 'maxLat', 'minLon', 'maxLon'].map((k) => Number(q[k]));
+  if (nums.some((n) => !Number.isFinite(n))) {
+    return c.json({ error: 'Потрібні межі minLat, maxLat, minLon, maxLon' }, 400);
+  }
+  const [minLat, maxLat, minLon, maxLon] = nums as [number, number, number, number];
+
+  // Занадто велика область — це десятки тисяч точок і марний трафік.
+  if ((maxLat - minLat) * (maxLon - minLon) > 60) {
+    return c.json({ error: 'Завелика область — наблизьте мапу', tooWide: true }, 400);
+  }
+
+  // Порожній параметр означає «усі мережі». Без відсіювання порожніх рядків
+  // Number('') дасть 0 і вибірка звузиться до неіснуючої мережі з id 0.
+  const networkIds = (q.networks ?? '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter((v) => v !== '')
+    .map((v) => Number(v))
+    .filter((v) => Number.isFinite(v) && v > 0);
+
+  const stations = await stationsInBbox(c.env, {
+    minLat,
+    maxLat,
+    minLon,
+    maxLon,
+    networkIds,
+    minPowerKw: Number.isFinite(Number(q.minPowerKw)) ? Number(q.minPowerKw) : 50,
+    limit: 400,
+  });
+  return c.json(stations);
 });
 
 api.post('/plan', async (c) => {
