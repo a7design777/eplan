@@ -500,6 +500,23 @@ details.filters > div {
   gap: 6px;
 }
 
+.map-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  max-width: 340px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  text-align: center;
+}
+
 .map-styles {
   position: absolute;
   bottom: 28px;

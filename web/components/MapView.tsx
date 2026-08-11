@@ -26,6 +26,7 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
   const mapRef = useRef<MlMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
   const [style, setStyle] = useState<MapStyle>(loadMapStyle);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Колбеки міняються на кожен рендер, а слухач мапи вішається раз — тримаємо
   // їх у ref, щоб не перепідписуватись і не пересоздавати мапу.
@@ -42,13 +43,27 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
     const container = containerRef.current;
     if (!container || mapRef.current) return;
 
-    const map = new maplibregl.Map({
-      container,
-      style: styleRef.current.url,
-      center: [14, 50],
-      zoom: 4,
-      attributionControl: { compact: true },
-    });
+    let map: MlMap;
+    try {
+      map = new maplibregl.Map({
+        container,
+        style: styleRef.current.style,
+        center: [14, 50],
+        zoom: 4,
+        attributionControl: { compact: true },
+      });
+    } catch (err) {
+      // Найчастіше це вимкнений або недоступний WebGL. Порожній прямокутник без
+      // пояснень — найгірше, що можна показати, тому кажемо прямо.
+      setMapError(
+        `Не вдалося запустити мапу: ${(err as Error).message}. Найімовірніша причина — вимкнений WebGL або апаратне прискорення в браузері.`,
+      );
+      return;
+    }
+
+    map.on('webglcontextlost', () =>
+      setMapError('Браузер втратив контекст WebGL. Перезавантажте сторінку.'),
+    );
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
     mapRef.current = map;
@@ -148,7 +163,7 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
     // Мапа вже створена з початковим стилем — перевстановлювати його не треба.
     if (!map || appliedStyleRef.current === style.id) return;
     appliedStyleRef.current = style.id;
-    map.setStyle(style.url);
+    map.setStyle(style.style);
     saveMapStyle(style.id);
 
     // Підміна стилю асинхронна і стирає всі наші шари. Подія `styledata` після неї
@@ -170,6 +185,7 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
   return (
     <>
       <div className="map" ref={containerRef} />
+      {mapError && <div className="map-error">{mapError}</div>}
       <div className="map-styles">
         {MAP_STYLES.map((s) => (
           <button
