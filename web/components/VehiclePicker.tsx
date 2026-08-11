@@ -1,4 +1,5 @@
-import type { ConnectorType, Vehicle } from '../../src/types';
+import type { Vehicle } from '../../src/types';
+import { ALL_CONNECTORS, CONNECTOR_LABELS } from '../lib/connectors';
 
 const CUSTOM_ID = '__custom__';
 
@@ -28,12 +29,11 @@ export function makeCustomVehicle(base?: Partial<Vehicle>): Vehicle {
     baseConsumptionWhPerKm: base?.baseConsumptionWhPerKm ?? 175,
     maxDcPowerKw,
     maxAcPowerKw: 11,
-    connectors: base?.connectors ?? ['ccs', 'type2'],
+    // Granny-кабель на побутову розетку йде в комплекті практично з кожним EV.
+    connectors: base?.connectors ?? ['ccs', 'type2', 'schuko'],
     chargeCurve: customCurve(maxDcPowerKw),
   };
 }
-
-const ALL_CONNECTORS: ConnectorType[] = ['ccs', 'chademo', 'type2', 'tesla'];
 
 interface Props {
   vehicles: Vehicle[];
@@ -129,7 +129,7 @@ export function VehiclePicker({ vehicles, value, onChange }: Props) {
                     if (next.length > 0) patchCustom({ connectors: next });
                   }}
                 >
-                  {c === 'ccs' ? 'CCS' : c === 'chademo' ? 'CHAdeMO' : c === 'type2' ? 'Type 2' : 'Tesla'}
+                  {CONNECTOR_LABELS[c]}
                 </button>
               ))}
             </div>

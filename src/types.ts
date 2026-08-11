@@ -26,7 +26,8 @@ export interface RoutePoint extends LatLon {
   speedKph: number;
 }
 
-export type ConnectorType = 'ccs' | 'chademo' | 'type2' | 'tesla';
+/** `schuko` — побутова розетка 220 В (granny-кабель): повільно, але часто безкоштовно. */
+export type ConnectorType = 'ccs' | 'chademo' | 'type2' | 'tesla' | 'schuko';
 
 /** Точка кривої зарядки: до якого SoC діє яка потужність. */
 export interface ChargeCurvePoint {

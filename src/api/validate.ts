@@ -2,7 +2,7 @@ import type { ConnectorType, PlanFilters, PlanRequest, Vehicle, Waypoint } from 
 
 export class ValidationError extends Error {}
 
-const CONNECTORS: ConnectorType[] = ['ccs', 'chademo', 'type2', 'tesla'];
+const CONNECTORS: ConnectorType[] = ['ccs', 'chademo', 'type2', 'tesla', 'schuko'];
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -89,7 +89,8 @@ function parseFilters(v: unknown): PlanFilters {
       num(id, `filters.excludedNetworkIds[${i}]`, 0, 1e9),
     ),
     freeOnly: f.freeOnly === true,
-    minPowerKw: num(f.minPowerKw ?? 50, 'filters.minPowerKw', 3, 400),
+    // Нижня межа 2 кВт — щоб можна було шукати побутові розетки 220 В.
+    minPowerKw: num(f.minPowerKw ?? 50, 'filters.minPowerKw', 2, 400),
     reserveSocPct: num(f.reserveSocPct ?? 10, 'filters.reserveSocPct', 0, 50),
     maxDetourKm: num(f.maxDetourKm ?? 5, 'filters.maxDetourKm', 0.5, 30),
     avoidTolls: f.avoidTolls === true,

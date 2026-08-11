@@ -7,16 +7,44 @@
     "baseConsumptionWhPerKm": 152,
     "maxDcPowerKw": 250,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "tesla"],
+    "connectors": [
+      "ccs",
+      "tesla",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 170 },
-      { "socPct": 10, "powerKw": 250 },
-      { "socPct": 20, "powerKw": 210 },
-      { "socPct": 40, "powerKw": 145 },
-      { "socPct": 60, "powerKw": 95 },
-      { "socPct": 80, "powerKw": 55 },
-      { "socPct": 90, "powerKw": 32 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 170
+      },
+      {
+        "socPct": 10,
+        "powerKw": 250
+      },
+      {
+        "socPct": 20,
+        "powerKw": 210
+      },
+      {
+        "socPct": 40,
+        "powerKw": 145
+      },
+      {
+        "socPct": 60,
+        "powerKw": 95
+      },
+      {
+        "socPct": 80,
+        "powerKw": 55
+      },
+      {
+        "socPct": 90,
+        "powerKw": 32
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -27,15 +55,40 @@
     "baseConsumptionWhPerKm": 143,
     "maxDcPowerKw": 170,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "tesla"],
+    "connectors": [
+      "ccs",
+      "tesla",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 120 },
-      { "socPct": 10, "powerKw": 170 },
-      { "socPct": 30, "powerKw": 130 },
-      { "socPct": 50, "powerKw": 90 },
-      { "socPct": 70, "powerKw": 60 },
-      { "socPct": 85, "powerKw": 35 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 120
+      },
+      {
+        "socPct": 10,
+        "powerKw": 170
+      },
+      {
+        "socPct": 30,
+        "powerKw": 130
+      },
+      {
+        "socPct": 50,
+        "powerKw": 90
+      },
+      {
+        "socPct": 70,
+        "powerKw": 60
+      },
+      {
+        "socPct": 85,
+        "powerKw": 35
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -46,16 +99,44 @@
     "baseConsumptionWhPerKm": 168,
     "maxDcPowerKw": 250,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "tesla"],
+    "connectors": [
+      "ccs",
+      "tesla",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 170 },
-      { "socPct": 10, "powerKw": 250 },
-      { "socPct": 20, "powerKw": 205 },
-      { "socPct": 40, "powerKw": 140 },
-      { "socPct": 60, "powerKw": 92 },
-      { "socPct": 80, "powerKw": 52 },
-      { "socPct": 90, "powerKw": 30 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 170
+      },
+      {
+        "socPct": 10,
+        "powerKw": 250
+      },
+      {
+        "socPct": 20,
+        "powerKw": 205
+      },
+      {
+        "socPct": 40,
+        "powerKw": 140
+      },
+      {
+        "socPct": 60,
+        "powerKw": 92
+      },
+      {
+        "socPct": 80,
+        "powerKw": 52
+      },
+      {
+        "socPct": 90,
+        "powerKw": 30
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -66,15 +147,40 @@
     "baseConsumptionWhPerKm": 175,
     "maxDcPowerKw": 250,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "tesla"],
+    "connectors": [
+      "ccs",
+      "tesla",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 180 },
-      { "socPct": 10, "powerKw": 250 },
-      { "socPct": 25, "powerKw": 190 },
-      { "socPct": 45, "powerKw": 130 },
-      { "socPct": 65, "powerKw": 85 },
-      { "socPct": 80, "powerKw": 50 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 180
+      },
+      {
+        "socPct": 10,
+        "powerKw": 250
+      },
+      {
+        "socPct": 25,
+        "powerKw": 190
+      },
+      {
+        "socPct": 45,
+        "powerKw": 130
+      },
+      {
+        "socPct": 65,
+        "powerKw": 85
+      },
+      {
+        "socPct": 80,
+        "powerKw": 50
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -85,15 +191,41 @@
     "baseConsumptionWhPerKm": 200,
     "maxDcPowerKw": 120,
     "maxAcPowerKw": 11,
-    "connectors": ["tesla", "type2"],
+    "connectors": [
+      "ccs",
+      "tesla",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 110 },
-      { "socPct": 10, "powerKw": 118 },
-      { "socPct": 30, "powerKw": 100 },
-      { "socPct": 50, "powerKw": 72 },
-      { "socPct": 70, "powerKw": 45 },
-      { "socPct": 85, "powerKw": 25 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 110
+      },
+      {
+        "socPct": 10,
+        "powerKw": 118
+      },
+      {
+        "socPct": 30,
+        "powerKw": 100
+      },
+      {
+        "socPct": 50,
+        "powerKw": 72
+      },
+      {
+        "socPct": 70,
+        "powerKw": 45
+      },
+      {
+        "socPct": 85,
+        "powerKw": 25
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -104,15 +236,40 @@
     "baseConsumptionWhPerKm": 160,
     "maxDcPowerKw": 120,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 100 },
-      { "socPct": 10, "powerKw": 120 },
-      { "socPct": 35, "powerKw": 110 },
-      { "socPct": 55, "powerKw": 75 },
-      { "socPct": 70, "powerKw": 55 },
-      { "socPct": 85, "powerKw": 30 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 100
+      },
+      {
+        "socPct": 10,
+        "powerKw": 120
+      },
+      {
+        "socPct": 35,
+        "powerKw": 110
+      },
+      {
+        "socPct": 55,
+        "powerKw": 75
+      },
+      {
+        "socPct": 70,
+        "powerKw": 55
+      },
+      {
+        "socPct": 85,
+        "powerKw": 30
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -123,15 +280,40 @@
     "baseConsumptionWhPerKm": 178,
     "maxDcPowerKw": 135,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 110 },
-      { "socPct": 10, "powerKw": 135 },
-      { "socPct": 40, "powerKw": 115 },
-      { "socPct": 60, "powerKw": 80 },
-      { "socPct": 75, "powerKw": 55 },
-      { "socPct": 90, "powerKw": 28 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 110
+      },
+      {
+        "socPct": 10,
+        "powerKw": 135
+      },
+      {
+        "socPct": 40,
+        "powerKw": 115
+      },
+      {
+        "socPct": 60,
+        "powerKw": 80
+      },
+      {
+        "socPct": 75,
+        "powerKw": 55
+      },
+      {
+        "socPct": 90,
+        "powerKw": 28
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -142,15 +324,40 @@
     "baseConsumptionWhPerKm": 158,
     "maxDcPowerKw": 175,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 130 },
-      { "socPct": 10, "powerKw": 175 },
-      { "socPct": 35, "powerKw": 150 },
-      { "socPct": 55, "powerKw": 100 },
-      { "socPct": 75, "powerKw": 60 },
-      { "socPct": 90, "powerKw": 30 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 130
+      },
+      {
+        "socPct": 10,
+        "powerKw": 175
+      },
+      {
+        "socPct": 35,
+        "powerKw": 150
+      },
+      {
+        "socPct": 55,
+        "powerKw": 100
+      },
+      {
+        "socPct": 75,
+        "powerKw": 60
+      },
+      {
+        "socPct": 90,
+        "powerKw": 30
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -161,15 +368,40 @@
     "baseConsumptionWhPerKm": 176,
     "maxDcPowerKw": 135,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 110 },
-      { "socPct": 10, "powerKw": 135 },
-      { "socPct": 40, "powerKw": 115 },
-      { "socPct": 60, "powerKw": 80 },
-      { "socPct": 75, "powerKw": 55 },
-      { "socPct": 90, "powerKw": 28 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 110
+      },
+      {
+        "socPct": 10,
+        "powerKw": 135
+      },
+      {
+        "socPct": 40,
+        "powerKw": 115
+      },
+      {
+        "socPct": 60,
+        "powerKw": 80
+      },
+      {
+        "socPct": 75,
+        "powerKw": 55
+      },
+      {
+        "socPct": 90,
+        "powerKw": 28
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -180,15 +412,40 @@
     "baseConsumptionWhPerKm": 173,
     "maxDcPowerKw": 233,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 180 },
-      { "socPct": 10, "powerKw": 233 },
-      { "socPct": 45, "powerKw": 215 },
-      { "socPct": 60, "powerKw": 130 },
-      { "socPct": 75, "powerKw": 85 },
-      { "socPct": 85, "powerKw": 50 },
-      { "socPct": 100, "powerKw": 10 }
+      {
+        "socPct": 0,
+        "powerKw": 180
+      },
+      {
+        "socPct": 10,
+        "powerKw": 233
+      },
+      {
+        "socPct": 45,
+        "powerKw": 215
+      },
+      {
+        "socPct": 60,
+        "powerKw": 130
+      },
+      {
+        "socPct": 75,
+        "powerKw": 85
+      },
+      {
+        "socPct": 85,
+        "powerKw": 50
+      },
+      {
+        "socPct": 100,
+        "powerKw": 10
+      }
     ]
   },
   {
@@ -199,15 +456,40 @@
     "baseConsumptionWhPerKm": 145,
     "maxDcPowerKw": 233,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 180 },
-      { "socPct": 10, "powerKw": 233 },
-      { "socPct": 45, "powerKw": 215 },
-      { "socPct": 60, "powerKw": 130 },
-      { "socPct": 75, "powerKw": 85 },
-      { "socPct": 85, "powerKw": 50 },
-      { "socPct": 100, "powerKw": 10 }
+      {
+        "socPct": 0,
+        "powerKw": 180
+      },
+      {
+        "socPct": 10,
+        "powerKw": 233
+      },
+      {
+        "socPct": 45,
+        "powerKw": 215
+      },
+      {
+        "socPct": 60,
+        "powerKw": 130
+      },
+      {
+        "socPct": 75,
+        "powerKw": 85
+      },
+      {
+        "socPct": 85,
+        "powerKw": 50
+      },
+      {
+        "socPct": 100,
+        "powerKw": 10
+      }
     ]
   },
   {
@@ -218,14 +500,36 @@
     "baseConsumptionWhPerKm": 155,
     "maxDcPowerKw": 102,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 85 },
-      { "socPct": 10, "powerKw": 102 },
-      { "socPct": 45, "powerKw": 90 },
-      { "socPct": 65, "powerKw": 62 },
-      { "socPct": 80, "powerKw": 38 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 85
+      },
+      {
+        "socPct": 10,
+        "powerKw": 102
+      },
+      {
+        "socPct": 45,
+        "powerKw": 90
+      },
+      {
+        "socPct": 65,
+        "powerKw": 62
+      },
+      {
+        "socPct": 80,
+        "powerKw": 38
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -236,15 +540,40 @@
     "baseConsumptionWhPerKm": 168,
     "maxDcPowerKw": 233,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 180 },
-      { "socPct": 10, "powerKw": 233 },
-      { "socPct": 45, "powerKw": 215 },
-      { "socPct": 60, "powerKw": 130 },
-      { "socPct": 75, "powerKw": 85 },
-      { "socPct": 85, "powerKw": 50 },
-      { "socPct": 100, "powerKw": 10 }
+      {
+        "socPct": 0,
+        "powerKw": 180
+      },
+      {
+        "socPct": 10,
+        "powerKw": 233
+      },
+      {
+        "socPct": 45,
+        "powerKw": 215
+      },
+      {
+        "socPct": 60,
+        "powerKw": 130
+      },
+      {
+        "socPct": 75,
+        "powerKw": 85
+      },
+      {
+        "socPct": 85,
+        "powerKw": 50
+      },
+      {
+        "socPct": 100,
+        "powerKw": 10
+      }
     ]
   },
   {
@@ -255,14 +584,36 @@
     "baseConsumptionWhPerKm": 215,
     "maxDcPowerKw": 210,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 170 },
-      { "socPct": 10, "powerKw": 210 },
-      { "socPct": 45, "powerKw": 190 },
-      { "socPct": 65, "powerKw": 120 },
-      { "socPct": 80, "powerKw": 70 },
-      { "socPct": 100, "powerKw": 10 }
+      {
+        "socPct": 0,
+        "powerKw": 170
+      },
+      {
+        "socPct": 10,
+        "powerKw": 210
+      },
+      {
+        "socPct": 45,
+        "powerKw": 190
+      },
+      {
+        "socPct": 65,
+        "powerKw": 120
+      },
+      {
+        "socPct": 80,
+        "powerKw": 70
+      },
+      {
+        "socPct": 100,
+        "powerKw": 10
+      }
     ]
   },
   {
@@ -273,14 +624,36 @@
     "baseConsumptionWhPerKm": 160,
     "maxDcPowerKw": 80,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 70 },
-      { "socPct": 10, "powerKw": 80 },
-      { "socPct": 50, "powerKw": 72 },
-      { "socPct": 70, "powerKw": 50 },
-      { "socPct": 85, "powerKw": 30 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 70
+      },
+      {
+        "socPct": 10,
+        "powerKw": 80
+      },
+      {
+        "socPct": 50,
+        "powerKw": 72
+      },
+      {
+        "socPct": 70,
+        "powerKw": 50
+      },
+      {
+        "socPct": 85,
+        "powerKw": 30
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -291,15 +664,40 @@
     "baseConsumptionWhPerKm": 160,
     "maxDcPowerKw": 205,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 160 },
-      { "socPct": 10, "powerKw": 205 },
-      { "socPct": 35, "powerKw": 170 },
-      { "socPct": 55, "powerKw": 110 },
-      { "socPct": 75, "powerKw": 65 },
-      { "socPct": 90, "powerKw": 32 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 160
+      },
+      {
+        "socPct": 10,
+        "powerKw": 205
+      },
+      {
+        "socPct": 35,
+        "powerKw": 170
+      },
+      {
+        "socPct": 55,
+        "powerKw": 110
+      },
+      {
+        "socPct": 75,
+        "powerKw": 65
+      },
+      {
+        "socPct": 90,
+        "powerKw": 32
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -310,14 +708,36 @@
     "baseConsumptionWhPerKm": 185,
     "maxDcPowerKw": 150,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 120 },
-      { "socPct": 10, "powerKw": 150 },
-      { "socPct": 40, "powerKw": 125 },
-      { "socPct": 60, "powerKw": 85 },
-      { "socPct": 80, "powerKw": 45 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 120
+      },
+      {
+        "socPct": 10,
+        "powerKw": 150
+      },
+      {
+        "socPct": 40,
+        "powerKw": 125
+      },
+      {
+        "socPct": 60,
+        "powerKw": 85
+      },
+      {
+        "socPct": 80,
+        "powerKw": 45
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -328,14 +748,36 @@
     "baseConsumptionWhPerKm": 195,
     "maxDcPowerKw": 195,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 160 },
-      { "socPct": 10, "powerKw": 195 },
-      { "socPct": 40, "powerKw": 165 },
-      { "socPct": 60, "powerKw": 110 },
-      { "socPct": 80, "powerKw": 60 },
-      { "socPct": 100, "powerKw": 9 }
+      {
+        "socPct": 0,
+        "powerKw": 160
+      },
+      {
+        "socPct": 10,
+        "powerKw": 195
+      },
+      {
+        "socPct": 40,
+        "powerKw": 165
+      },
+      {
+        "socPct": 60,
+        "powerKw": 110
+      },
+      {
+        "socPct": 80,
+        "powerKw": 60
+      },
+      {
+        "socPct": 100,
+        "powerKw": 9
+      }
     ]
   },
   {
@@ -346,14 +788,36 @@
     "baseConsumptionWhPerKm": 165,
     "maxDcPowerKw": 170,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 140 },
-      { "socPct": 10, "powerKw": 170 },
-      { "socPct": 40, "powerKw": 145 },
-      { "socPct": 60, "powerKw": 100 },
-      { "socPct": 80, "powerKw": 55 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 140
+      },
+      {
+        "socPct": 10,
+        "powerKw": 170
+      },
+      {
+        "socPct": 40,
+        "powerKw": 145
+      },
+      {
+        "socPct": 60,
+        "powerKw": 100
+      },
+      {
+        "socPct": 80,
+        "powerKw": 55
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -364,14 +828,36 @@
     "baseConsumptionWhPerKm": 178,
     "maxDcPowerKw": 100,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 85 },
-      { "socPct": 10, "powerKw": 100 },
-      { "socPct": 45, "powerKw": 88 },
-      { "socPct": 65, "powerKw": 60 },
-      { "socPct": 85, "powerKw": 32 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 85
+      },
+      {
+        "socPct": 10,
+        "powerKw": 100
+      },
+      {
+        "socPct": 45,
+        "powerKw": 88
+      },
+      {
+        "socPct": 65,
+        "powerKw": 60
+      },
+      {
+        "socPct": 85,
+        "powerKw": 32
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -382,15 +868,40 @@
     "baseConsumptionWhPerKm": 180,
     "maxDcPowerKw": 175,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 130 },
-      { "socPct": 10, "powerKw": 175 },
-      { "socPct": 35, "powerKw": 145 },
-      { "socPct": 55, "powerKw": 100 },
-      { "socPct": 75, "powerKw": 60 },
-      { "socPct": 90, "powerKw": 30 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 130
+      },
+      {
+        "socPct": 10,
+        "powerKw": 175
+      },
+      {
+        "socPct": 35,
+        "powerKw": 145
+      },
+      {
+        "socPct": 55,
+        "powerKw": 100
+      },
+      {
+        "socPct": 75,
+        "powerKw": 60
+      },
+      {
+        "socPct": 90,
+        "powerKw": 30
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -401,14 +912,36 @@
     "baseConsumptionWhPerKm": 185,
     "maxDcPowerKw": 270,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 220 },
-      { "socPct": 10, "powerKw": 270 },
-      { "socPct": 40, "powerKw": 235 },
-      { "socPct": 60, "powerKw": 150 },
-      { "socPct": 80, "powerKw": 70 },
-      { "socPct": 100, "powerKw": 10 }
+      {
+        "socPct": 0,
+        "powerKw": 220
+      },
+      {
+        "socPct": 10,
+        "powerKw": 270
+      },
+      {
+        "socPct": 40,
+        "powerKw": 235
+      },
+      {
+        "socPct": 60,
+        "powerKw": 150
+      },
+      {
+        "socPct": 80,
+        "powerKw": 70
+      },
+      {
+        "socPct": 100,
+        "powerKw": 10
+      }
     ]
   },
   {
@@ -419,14 +952,36 @@
     "baseConsumptionWhPerKm": 190,
     "maxDcPowerKw": 270,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 220 },
-      { "socPct": 10, "powerKw": 270 },
-      { "socPct": 40, "powerKw": 235 },
-      { "socPct": 60, "powerKw": 150 },
-      { "socPct": 80, "powerKw": 70 },
-      { "socPct": 100, "powerKw": 10 }
+      {
+        "socPct": 0,
+        "powerKw": 220
+      },
+      {
+        "socPct": 10,
+        "powerKw": 270
+      },
+      {
+        "socPct": 40,
+        "powerKw": 235
+      },
+      {
+        "socPct": 60,
+        "powerKw": 150
+      },
+      {
+        "socPct": 80,
+        "powerKw": 70
+      },
+      {
+        "socPct": 100,
+        "powerKw": 10
+      }
     ]
   },
   {
@@ -437,15 +992,40 @@
     "baseConsumptionWhPerKm": 158,
     "maxDcPowerKw": 130,
     "maxAcPowerKw": 22,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 105 },
-      { "socPct": 10, "powerKw": 130 },
-      { "socPct": 35, "powerKw": 110 },
-      { "socPct": 55, "powerKw": 75 },
-      { "socPct": 75, "powerKw": 45 },
-      { "socPct": 90, "powerKw": 25 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 105
+      },
+      {
+        "socPct": 10,
+        "powerKw": 130
+      },
+      {
+        "socPct": 35,
+        "powerKw": 110
+      },
+      {
+        "socPct": 55,
+        "powerKw": 75
+      },
+      {
+        "socPct": 75,
+        "powerKw": 45
+      },
+      {
+        "socPct": 90,
+        "powerKw": 25
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -456,13 +1036,32 @@
     "baseConsumptionWhPerKm": 165,
     "maxDcPowerKw": 46,
     "maxAcPowerKw": 22,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 40 },
-      { "socPct": 20, "powerKw": 46 },
-      { "socPct": 60, "powerKw": 40 },
-      { "socPct": 80, "powerKw": 25 },
-      { "socPct": 100, "powerKw": 6 }
+      {
+        "socPct": 0,
+        "powerKw": 40
+      },
+      {
+        "socPct": 20,
+        "powerKw": 46
+      },
+      {
+        "socPct": 60,
+        "powerKw": 40
+      },
+      {
+        "socPct": 80,
+        "powerKw": 25
+      },
+      {
+        "socPct": 100,
+        "powerKw": 6
+      }
     ]
   },
   {
@@ -473,14 +1072,36 @@
     "baseConsumptionWhPerKm": 185,
     "maxDcPowerKw": 130,
     "maxAcPowerKw": 22,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 110 },
-      { "socPct": 10, "powerKw": 130 },
-      { "socPct": 45, "powerKw": 110 },
-      { "socPct": 65, "powerKw": 75 },
-      { "socPct": 85, "powerKw": 40 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 110
+      },
+      {
+        "socPct": 10,
+        "powerKw": 130
+      },
+      {
+        "socPct": 45,
+        "powerKw": 110
+      },
+      {
+        "socPct": 65,
+        "powerKw": 75
+      },
+      {
+        "socPct": 85,
+        "powerKw": 40
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -491,14 +1112,36 @@
     "baseConsumptionWhPerKm": 175,
     "maxDcPowerKw": 46,
     "maxAcPowerKw": 6.6,
-    "connectors": ["chademo", "type2"],
+    "connectors": [
+      "chademo",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 44 },
-      { "socPct": 20, "powerKw": 46 },
-      { "socPct": 50, "powerKw": 38 },
-      { "socPct": 70, "powerKw": 26 },
-      { "socPct": 85, "powerKw": 18 },
-      { "socPct": 100, "powerKw": 5 }
+      {
+        "socPct": 0,
+        "powerKw": 44
+      },
+      {
+        "socPct": 20,
+        "powerKw": 46
+      },
+      {
+        "socPct": 50,
+        "powerKw": 38
+      },
+      {
+        "socPct": 70,
+        "powerKw": 26
+      },
+      {
+        "socPct": 85,
+        "powerKw": 18
+      },
+      {
+        "socPct": 100,
+        "powerKw": 5
+      }
     ]
   },
   {
@@ -509,14 +1152,36 @@
     "baseConsumptionWhPerKm": 150,
     "maxDcPowerKw": 100,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 85 },
-      { "socPct": 10, "powerKw": 100 },
-      { "socPct": 40, "powerKw": 85 },
-      { "socPct": 60, "powerKw": 60 },
-      { "socPct": 80, "powerKw": 32 },
-      { "socPct": 100, "powerKw": 6 }
+      {
+        "socPct": 0,
+        "powerKw": 85
+      },
+      {
+        "socPct": 10,
+        "powerKw": 100
+      },
+      {
+        "socPct": 40,
+        "powerKw": 85
+      },
+      {
+        "socPct": 60,
+        "powerKw": 60
+      },
+      {
+        "socPct": 80,
+        "powerKw": 32
+      },
+      {
+        "socPct": 100,
+        "powerKw": 6
+      }
     ]
   },
   {
@@ -527,14 +1192,36 @@
     "baseConsumptionWhPerKm": 145,
     "maxDcPowerKw": 85,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 70 },
-      { "socPct": 10, "powerKw": 85 },
-      { "socPct": 40, "powerKw": 70 },
-      { "socPct": 65, "powerKw": 45 },
-      { "socPct": 85, "powerKw": 25 },
-      { "socPct": 100, "powerKw": 6 }
+      {
+        "socPct": 0,
+        "powerKw": 70
+      },
+      {
+        "socPct": 10,
+        "powerKw": 85
+      },
+      {
+        "socPct": 40,
+        "powerKw": 70
+      },
+      {
+        "socPct": 65,
+        "powerKw": 45
+      },
+      {
+        "socPct": 85,
+        "powerKw": 25
+      },
+      {
+        "socPct": 100,
+        "powerKw": 6
+      }
     ]
   },
   {
@@ -545,14 +1232,36 @@
     "baseConsumptionWhPerKm": 155,
     "maxDcPowerKw": 153,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 120 },
-      { "socPct": 10, "powerKw": 153 },
-      { "socPct": 35, "powerKw": 130 },
-      { "socPct": 55, "powerKw": 90 },
-      { "socPct": 75, "powerKw": 55 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 120
+      },
+      {
+        "socPct": 10,
+        "powerKw": 153
+      },
+      {
+        "socPct": 35,
+        "powerKw": 130
+      },
+      {
+        "socPct": 55,
+        "powerKw": 90
+      },
+      {
+        "socPct": 75,
+        "powerKw": 55
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -563,14 +1272,36 @@
     "baseConsumptionWhPerKm": 180,
     "maxDcPowerKw": 200,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 150 },
-      { "socPct": 10, "powerKw": 200 },
-      { "socPct": 35, "powerKw": 160 },
-      { "socPct": 55, "powerKw": 105 },
-      { "socPct": 80, "powerKw": 55 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 150
+      },
+      {
+        "socPct": 10,
+        "powerKw": 200
+      },
+      {
+        "socPct": 35,
+        "powerKw": 160
+      },
+      {
+        "socPct": 55,
+        "powerKw": 105
+      },
+      {
+        "socPct": 80,
+        "powerKw": 55
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -581,14 +1312,36 @@
     "baseConsumptionWhPerKm": 165,
     "maxDcPowerKw": 205,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 155 },
-      { "socPct": 10, "powerKw": 205 },
-      { "socPct": 35, "powerKw": 165 },
-      { "socPct": 55, "powerKw": 110 },
-      { "socPct": 80, "powerKw": 55 },
-      { "socPct": 100, "powerKw": 8 }
+      {
+        "socPct": 0,
+        "powerKw": 155
+      },
+      {
+        "socPct": 10,
+        "powerKw": 205
+      },
+      {
+        "socPct": 35,
+        "powerKw": 165
+      },
+      {
+        "socPct": 55,
+        "powerKw": 110
+      },
+      {
+        "socPct": 80,
+        "powerKw": 55
+      },
+      {
+        "socPct": 100,
+        "powerKw": 8
+      }
     ]
   },
   {
@@ -599,14 +1352,36 @@
     "baseConsumptionWhPerKm": 158,
     "maxDcPowerKw": 140,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 110 },
-      { "socPct": 10, "powerKw": 140 },
-      { "socPct": 35, "powerKw": 115 },
-      { "socPct": 55, "powerKw": 80 },
-      { "socPct": 80, "powerKw": 40 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 110
+      },
+      {
+        "socPct": 10,
+        "powerKw": 140
+      },
+      {
+        "socPct": 35,
+        "powerKw": 115
+      },
+      {
+        "socPct": 55,
+        "powerKw": 80
+      },
+      {
+        "socPct": 80,
+        "powerKw": 40
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -617,14 +1392,36 @@
     "baseConsumptionWhPerKm": 180,
     "maxDcPowerKw": 88,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 75 },
-      { "socPct": 15, "powerKw": 88 },
-      { "socPct": 50, "powerKw": 75 },
-      { "socPct": 70, "powerKw": 50 },
-      { "socPct": 85, "powerKw": 28 },
-      { "socPct": 100, "powerKw": 6 }
+      {
+        "socPct": 0,
+        "powerKw": 75
+      },
+      {
+        "socPct": 15,
+        "powerKw": 88
+      },
+      {
+        "socPct": 50,
+        "powerKw": 75
+      },
+      {
+        "socPct": 70,
+        "powerKw": 50
+      },
+      {
+        "socPct": 85,
+        "powerKw": 28
+      },
+      {
+        "socPct": 100,
+        "powerKw": 6
+      }
     ]
   },
   {
@@ -635,14 +1432,36 @@
     "baseConsumptionWhPerKm": 172,
     "maxDcPowerKw": 150,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 120 },
-      { "socPct": 15, "powerKw": 150 },
-      { "socPct": 45, "powerKw": 125 },
-      { "socPct": 65, "powerKw": 85 },
-      { "socPct": 85, "powerKw": 40 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 120
+      },
+      {
+        "socPct": 15,
+        "powerKw": 150
+      },
+      {
+        "socPct": 45,
+        "powerKw": 125
+      },
+      {
+        "socPct": 65,
+        "powerKw": 85
+      },
+      {
+        "socPct": 85,
+        "powerKw": 40
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   },
   {
@@ -653,15 +1472,40 @@
     "baseConsumptionWhPerKm": 162,
     "maxDcPowerKw": 120,
     "maxAcPowerKw": 11,
-    "connectors": ["ccs", "type2"],
+    "connectors": [
+      "ccs",
+      "type2",
+      "schuko"
+    ],
     "chargeCurve": [
-      { "socPct": 0, "powerKw": 100 },
-      { "socPct": 10, "powerKw": 120 },
-      { "socPct": 35, "powerKw": 110 },
-      { "socPct": 55, "powerKw": 75 },
-      { "socPct": 70, "powerKw": 55 },
-      { "socPct": 85, "powerKw": 30 },
-      { "socPct": 100, "powerKw": 7 }
+      {
+        "socPct": 0,
+        "powerKw": 100
+      },
+      {
+        "socPct": 10,
+        "powerKw": 120
+      },
+      {
+        "socPct": 35,
+        "powerKw": 110
+      },
+      {
+        "socPct": 55,
+        "powerKw": 75
+      },
+      {
+        "socPct": 70,
+        "powerKw": 55
+      },
+      {
+        "socPct": 85,
+        "powerKw": 30
+      },
+      {
+        "socPct": 100,
+        "powerKw": 7
+      }
     ]
   }
 ]

@@ -6,12 +6,19 @@
  * інкрементально через src/stations/import.ts.
  *
  *   OCM_API_KEY=... node scripts/fetch-stations.ts
- *   npx wrangler d1 import eplan --file=data/stations.sql --remote
+ *   OCM_API_KEY=... MIN_POWER_KW=2 node scripts/fetch-stations.ts   # разом із розетками 220 В
+ *   npx wrangler d1 execute eplan --file=data/stations.sql --remote
  */
 import { writeFile } from 'node:fs/promises';
 import { EUROPE_COUNTRIES, OCM_API, toStationRow, type OcmPoi } from '../src/stations/ocm.ts';
 
-const MIN_POWER_KW = 50;
+/**
+ * За замовчуванням тягнемо лише швидкі станції — саме вони потрібні для планування
+ * траси. Знизити поріг (напр. `MIN_POWER_KW=2`) означає забрати ще й повільні AC
+ * та побутові розетки 220 В: це в рази більший обсяг даних і довший імпорт,
+ * зате з'являються точки для нічної зарядки в кінцевій точці.
+ */
+const MIN_POWER_KW = Number(process.env.MIN_POWER_KW ?? 50);
 const MAX_RESULTS_PER_COUNTRY = 20000;
 const OUT_FILE = new URL('../data/stations.sql', import.meta.url);
 
@@ -117,4 +124,4 @@ for (const country of EUROPE_COUNTRIES) {
 
 await writeFile(OUT_FILE, lines.join('\n') + '\n', 'utf8');
 console.log(`\nГотово: ${total} станцій → data/stations.sql`);
-console.log('Далі: npx wrangler d1 import eplan --file=data/stations.sql --remote');
+console.log('Далі: npm run stations:import');

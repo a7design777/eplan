@@ -1,12 +1,6 @@
 import type { ConnectorType, PlanFilters } from '../../src/types';
 import type { NetworkInfo } from '../api';
-
-const CONNECTOR_LABELS: Record<ConnectorType, string> = {
-  ccs: 'CCS',
-  chademo: 'CHAdeMO',
-  type2: 'Type 2',
-  tesla: 'Tesla',
-};
+import { CONNECTOR_LABELS } from '../lib/connectors';
 
 interface Props {
   filters: PlanFilters;
@@ -57,7 +51,7 @@ export function Filters({ filters, networks, vehicleConnectors, onChange }: Prop
             <input
               id="f-power"
               type="number"
-              min={3}
+              min={2}
               max={400}
               step={1}
               value={filters.minPowerKw}

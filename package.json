@@ -10,7 +10,9 @@
     "deploy": "npm run build && wrangler deploy",
     "db:migrate": "wrangler d1 migrations apply eplan --remote",
     "db:migrate:local": "wrangler d1 migrations apply eplan --local",
-    "stations:fetch": "node scripts/fetch-stations.ts"
+    "stations:fetch": "node scripts/fetch-stations.ts",
+    "stations:import": "wrangler d1 execute eplan --file=data/stations.sql --remote",
+    "stations:import:local": "wrangler d1 execute eplan --file=data/stations.sql --local"
   },
   "keywords": [],
   "author": "",

@@ -16,12 +16,21 @@ const EMPTY_LINE = {
 interface Props {
   plan: RoutePlan | null;
   waypoints: Waypoint[];
+  /** Клік по вільному місцю мапи — додати точку маршруту. */
+  onPickPoint: (lat: number, lon: number) => void;
+  /** Маркер точки перетягнули на нове місце. */
+  onMovePoint: (index: number, lat: number, lon: number) => void;
 }
 
-export function MapView({ plan, waypoints }: Props) {
+export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+
+  // Колбеки міняються на кожен рендер, а слухач мапи вішається раз — тримаємо
+  // їх у ref, щоб не перепідписуватись і не пересоздавати мапу.
+  const handlersRef = useRef({ onPickPoint, onMovePoint });
+  handlersRef.current = { onPickPoint, onMovePoint };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -38,6 +47,13 @@ export function MapView({ plan, waypoints }: Props) {
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
     mapRef.current = map;
 
+    const onClick = (e: maplibregl.MapMouseEvent) => {
+      // Кліки по маркерах сюди не доходять — maplibre зупиняє їх на елементі маркера.
+      handlersRef.current.onPickPoint(e.lngLat.lat, e.lngLat.lng);
+    };
+    map.on('click', onClick);
+    map.getCanvas().style.cursor = 'crosshair';
+
     // Контейнер міняє розмір разом із сайдбаром і при повороті екрана,
     // а maplibre сам за цим не стежить.
     const observer = new ResizeObserver(() => map.resize());
@@ -45,6 +61,7 @@ export function MapView({ plan, waypoints }: Props) {
 
     return () => {
       observer.disconnect();
+      map.off('click', onClick);
       map.remove();
       mapRef.current = null;
     };
@@ -71,9 +88,20 @@ export function MapView({ plan, waypoints }: Props) {
 
       waypoints.forEach((w, i) => {
         const label = i === 0 ? 'A' : i === waypoints.length - 1 ? 'B' : String(i);
-        markersRef.current.push(
-          addMarker(map, w.lon, w.lat, label, 'marker-waypoint', escapeHtml(w.name ?? '')),
+        const marker = addMarker(
+          map,
+          w.lon,
+          w.lat,
+          label,
+          'marker-waypoint',
+          escapeHtml(w.name ?? ''),
+          true,
         );
+        marker.on('dragend', () => {
+          const { lat, lng } = marker.getLngLat();
+          handlersRef.current.onMovePoint(i, lat, lng);
+        });
+        markersRef.current.push(marker);
       });
 
       (plan?.stops ?? []).forEach((s, i) => {
@@ -147,12 +175,14 @@ function addMarker(
   label: string,
   className: string,
   popupHtml: string,
+  draggable = false,
 ): Marker {
   const el = document.createElement('div');
   el.className = `marker ${className}`;
   el.textContent = label;
+  if (draggable) el.title = 'Перетягніть, щоб змінити точку';
 
-  const marker = new maplibregl.Marker({ element: el }).setLngLat([lon, lat]);
+  const marker = new maplibregl.Marker({ element: el, draggable }).setLngLat([lon, lat]);
   if (popupHtml) {
     marker.setPopup(new maplibregl.Popup({ offset: 16, closeButton: false }).setHTML(popupHtml));
   }

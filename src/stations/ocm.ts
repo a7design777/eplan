@@ -16,6 +16,15 @@ const CONNECTION_TYPE_MAP: Record<number, ConnectorType> = {
   8: 'tesla',
   27: 'tesla',
   30: 'tesla',
+  // Побутові розетки, поширені в Європі: E (FR), J (CH), G (UK), H, C, F (Schuko), L (IT), K (DK).
+  3: 'schuko',
+  7: 'schuko',
+  9: 'schuko',
+  22: 'schuko',
+  23: 'schuko',
+  28: 'schuko',
+  29: 'schuko',
+  34: 'schuko',
 };
 
 export interface OcmConnection {

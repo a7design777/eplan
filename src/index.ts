@@ -59,6 +59,41 @@ api.get('/geocode', async (c) => {
   return c.json(out);
 });
 
+/** Зворотне геокодування: клік по мапі → людська назва точки. */
+api.get('/reverse', async (c) => {
+  const lat = Number(c.req.query('lat'));
+  const lon = Number(c.req.query('lon'));
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return c.json({ error: 'Потрібні координати lat і lon' }, 400);
+  }
+
+  // Округлення до ~100 м: сусідні кліки по одному місцю б'ють в один запис кешу.
+  const key = `reverse:${lat.toFixed(3)},${lon.toFixed(3)}`;
+  const cached = await c.env.CACHE.get(key, 'json');
+  if (cached) return c.json(cached);
+
+  const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}&lang=en`;
+  const res = await fetch(url, { headers: { 'User-Agent': 'eplan (e.car-ua.com)' } });
+
+  // Без назви точка все одно придатна — покажемо координати.
+  const fallback = { lat, lon, name: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+  if (!res.ok) return c.json(fallback);
+
+  const data = (await res.json()) as {
+    features?: { properties: Record<string, string> }[];
+  };
+  const props = data.features?.[0]?.properties;
+  const name = props
+    ? [props.name, props.street, props.city, props.state, props.country]
+        .filter((v, i, arr) => v && arr.indexOf(v) === i)
+        .join(', ')
+    : '';
+
+  const out = name ? { lat, lon, name } : fallback;
+  await c.env.CACHE.put(key, JSON.stringify(out), { expirationTtl: 30 * 24 * 3600 });
+  return c.json(out);
+});
+
 api.post('/plan', async (c) => {
   const req = parsePlanRequest(await c.req.json());
   const provider = new ValhallaProvider(c.env);

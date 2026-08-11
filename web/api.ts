@@ -50,6 +50,8 @@ export const api = {
 
   geocode: (q: string) => request<Waypoint[]>(`/geocode?q=${encodeURIComponent(q)}`),
 
+  reverse: (lat: number, lon: number) => request<Waypoint>(`/reverse?lat=${lat}&lon=${lon}`),
+
   plan: (body: PlanRequest) =>
     request<PlanResponse>('/plan', { method: 'POST', body: JSON.stringify(body) }),
 

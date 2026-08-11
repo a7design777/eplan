@@ -59,6 +59,59 @@ export function App() {
   useEffect(refreshSaved, [refreshSaved]);
 
   const waypoints = useMemo(() => slots.filter((s): s is Waypoint => s !== null), [slots]);
+
+  /**
+   * Клік по мапі заповнює перший порожній слот, а якщо порожніх немає —
+   * додає проміжну точку перед фінішем. Назву тягнемо зворотним геокодуванням,
+   * але точка стає на місце одразу: чекати на мережу заради підпису безглуздо.
+   */
+  const pickPoint = useCallback((lat: number, lon: number) => {
+    const placeholder: Waypoint = { lat, lon, name: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+    let targetIndex = -1;
+
+    setSlots((prev) => {
+      const emptyIndex = prev.findIndex((s) => s === null);
+      if (emptyIndex !== -1) {
+        targetIndex = emptyIndex;
+        return prev.map((s, i) => (i === emptyIndex ? placeholder : s));
+      }
+      targetIndex = prev.length - 1;
+      return [...prev.slice(0, -1), placeholder, prev[prev.length - 1]!];
+    });
+
+    void api
+      .reverse(lat, lon)
+      .then((named) => {
+        setSlots((prev) =>
+          prev.map((s, i) =>
+            i === targetIndex && s?.lat === lat && s?.lon === lon ? named : s,
+          ),
+        );
+      })
+      .catch(() => {
+        // Назва не критична — координати вже показані.
+      });
+  }, []);
+
+  const movePoint = useCallback((index: number, lat: number, lon: number) => {
+    const placeholder: Waypoint = { lat, lon, name: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+    // waypoints — це slots без порожніх, тому індекс маркера треба перевести в індекс слота.
+    setSlots((prev) => {
+      const filledIndexes = prev.map((s, i) => (s ? i : -1)).filter((i) => i !== -1);
+      const slotIndex = filledIndexes[index];
+      if (slotIndex === undefined) return prev;
+      return prev.map((s, i) => (i === slotIndex ? placeholder : s));
+    });
+
+    void api
+      .reverse(lat, lon)
+      .then((named) => {
+        setSlots((prev) =>
+          prev.map((s) => (s?.lat === lat && s?.lon === lon ? named : s)),
+        );
+      })
+      .catch(() => {});
+  }, []);
   const canPlan = waypoints.length >= 2 && vehicle !== null && !planning;
 
   const buildRequest = (): PlanRequest | null => {
@@ -284,7 +337,15 @@ export function App() {
       </aside>
 
       <div className="map-wrap">
-        <MapView plan={shownPlan} waypoints={waypoints} />
+        <MapView
+          plan={shownPlan}
+          waypoints={waypoints}
+          onPickPoint={pickPoint}
+          onMovePoint={movePoint}
+        />
+        <div className="map-hint">
+          Клікніть по мапі, щоб поставити точку · маркер можна перетягнути
+        </div>
       </div>
 
       {showAuth && (
