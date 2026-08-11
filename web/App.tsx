@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, type AuthUser, type Bbox, type NetworkInfo, type SavedRouteSummary } from './api';
 import { MapView } from './components/MapView';
 import { WaypointInput } from './components/WaypointInput';
@@ -6,6 +6,7 @@ import { PlanSummary } from './components/PlanSummary';
 import { Filters } from './components/Filters';
 import { VehiclePicker } from './components/VehiclePicker';
 import { AuthDialog } from './components/AuthDialog';
+import { loadLocalPrefs, saveLocalPrefs } from './lib/prefs';
 import type {
   PlanFilters,
   PlanRequest,
@@ -30,14 +31,21 @@ const DEFAULT_FILTERS: PlanFilters = {
 };
 
 export function App() {
+  // Локальні налаштування читаємо синхронно, ще до першого рендера: інакше
+  // обране авто на мить блимне дефолтним, поки їде запит за серверними.
+  const local = useMemo(() => loadLocalPrefs(), []);
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(local?.vehicle ?? null);
   const [networks, setNetworks] = useState<NetworkInfo[]>([]);
 
   const [slots, setSlots] = useState<(Waypoint | null)[]>([null, null]);
-  const [startSocPct, setStartSocPct] = useState(90);
-  const [targetSocPct, setTargetSocPct] = useState(10);
-  const [filters, setFilters] = useState<PlanFilters>(DEFAULT_FILTERS);
+  const [startSocPct, setStartSocPct] = useState(local?.startSocPct ?? 90);
+  const [targetSocPct, setTargetSocPct] = useState(local?.targetSocPct ?? 10);
+  const [filters, setFilters] = useState<PlanFilters>({
+    ...DEFAULT_FILTERS,
+    ...(local?.filters ?? {}),
+  });
 
   const [result, setResult] = useState<PlanResponse | null>(null);
   const [variant, setVariant] = useState<string>('primary');
@@ -62,6 +70,58 @@ export function App() {
     api.networks().then(setNetworks).catch(() => setNetworks([]));
     api.me().then(setUser).catch(() => setUser(null));
   }, []);
+
+  // Поки серверні налаштування не підвантажились, зберігати не можна:
+  // інакше перший же рендер затре їх локальними.
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (!user) {
+      // Анонім працює на локальних налаштуваннях — вони вже застосовані.
+      hydratedRef.current = true;
+      return;
+    }
+    let cancelled = false;
+    api
+      .prefs()
+      .then((p) => {
+        if (cancelled || !p) return;
+        // Налаштування акаунту головніші за локальні: користувач міг зайти
+        // з іншого пристрою, і саме акаунт має бути джерелом правди.
+        if (p.vehicle) setVehicle(p.vehicle);
+        setStartSocPct(p.startSocPct);
+        setTargetSocPct(p.targetSocPct);
+        setFilters({ ...DEFAULT_FILTERS, ...p.filters });
+      })
+      .catch(() => {
+        // Немає налаштувань або мережа впала — лишаємось на локальних.
+      })
+      .finally(() => {
+        if (!cancelled) hydratedRef.current = true;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // Зберігаємо вибір авто, рівні заряду й фільтри. Точки маршруту не чіпаємо —
+  // це разова поїздка, а не налаштування.
+  useEffect(() => {
+    if (!hydratedRef.current || !vehicle) return;
+    const prefs = { vehicle, startSocPct, targetSocPct, filters };
+    saveLocalPrefs(prefs);
+
+    if (!user) return;
+    // Повзунки заряду смикають цей ефект десятки разів — шлемо на сервер із паузою.
+    const timer = setTimeout(() => {
+      api.savePrefs(prefs).catch(() => {
+        // Не збереглось на сервері — локальна копія все одно є.
+      });
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [vehicle, startSocPct, targetSocPct, filters, user]);
 
   const refreshSaved = useCallback(() => {
     if (!user) {

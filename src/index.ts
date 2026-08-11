@@ -2,7 +2,12 @@ import { Hono } from 'hono';
 import vehicles from '../data/vehicles.json';
 import { currentUser, createSession, destroySession, requireAuth, type AuthUser } from './auth/session';
 import { hashPassword, verifyPassword } from './auth/password';
-import { parseCredentials, parsePlanRequest, ValidationError } from './api/validate';
+import {
+  parseCredentials,
+  parsePlanRequest,
+  parseUserPrefs,
+  ValidationError,
+} from './api/validate';
 import { plan } from './routing/planner';
 import { ValhallaProvider } from './routing/valhalla';
 import { importStations } from './stations/import';
@@ -182,6 +187,28 @@ api.post('/auth/logout', async (c) => {
 api.get('/auth/me', async (c) => {
   const user = await currentUser(c);
   return user ? c.json(user) : c.json({ error: 'Не авторизовано' }, 401);
+});
+
+// --- Налаштування користувача ---
+
+api.get('/prefs', requireAuth, async (c) => {
+  const row = await c.env.DB.prepare('SELECT prefs_json FROM user_prefs WHERE user_id = ?')
+    .bind(c.get('user').id)
+    .first<{ prefs_json: string }>();
+
+  // Порожні налаштування — не помилка, просто користувач ще нічого не міняв.
+  if (!row) return c.json(null);
+  return c.json(JSON.parse(row.prefs_json));
+});
+
+api.put('/prefs', requireAuth, async (c) => {
+  const prefs = parseUserPrefs(await c.req.json());
+  await c.env.DB.prepare(
+    'INSERT OR REPLACE INTO user_prefs (user_id, prefs_json, updated_at) VALUES (?, ?, ?)',
+  )
+    .bind(c.get('user').id, JSON.stringify(prefs), Math.floor(Date.now() / 1000))
+    .run();
+  return c.json({ ok: true });
 });
 
 // --- Збережені маршрути ---

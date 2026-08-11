@@ -1,4 +1,5 @@
 import type { PlanRequest, PlanResponse, Station, Vehicle, Waypoint } from '../src/types';
+import type { UserPrefs } from './lib/prefs';
 
 export interface Bbox {
   minLat: number;
@@ -74,6 +75,10 @@ export const api = {
   login: (email: string, password: string) =>
     request<AuthUser>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   logout: () => request<{ ok: true }>('/auth/logout', { method: 'POST' }),
+
+  prefs: () => request<UserPrefs | null>('/prefs'),
+  savePrefs: (prefs: UserPrefs) =>
+    request<{ ok: true }>('/prefs', { method: 'PUT', body: JSON.stringify(prefs) }),
 
   savedRoutes: () => request<SavedRouteSummary[]>('/routes'),
   savedRoute: (id: string) =>

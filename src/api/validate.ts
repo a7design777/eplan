@@ -87,7 +87,7 @@ export function parseVehicle(v: unknown): Vehicle {
 
 const STRATEGIES: ChargingStrategy[] = ['fewest_stops', 'balanced', 'short_stops'];
 
-function parseFilters(v: unknown): PlanFilters {
+export function parseFilters(v: unknown): PlanFilters {
   const f = isRecord(v) ? v : {};
   const excludedRaw = Array.isArray(f.excludedNetworkIds) ? f.excludedNetworkIds : [];
   if (excludedRaw.length > 200) throw new ValidationError('Забагато виключених мереж');
@@ -136,6 +136,27 @@ export function parsePlanRequest(body: unknown): PlanRequest {
     vehicle: parseVehicle(body.vehicle),
     startSocPct,
     targetSocPct,
+    filters: parseFilters(body.filters),
+  };
+}
+
+export interface UserPrefs {
+  vehicle: Vehicle | null;
+  startSocPct: number;
+  targetSocPct: number;
+  filters: PlanFilters;
+}
+
+/**
+ * Налаштування користувача. Проходять ті самі парсери, що й запит на планування:
+ * у БД не має лежати те, що потім не розпланується.
+ */
+export function parseUserPrefs(body: unknown): UserPrefs {
+  if (!isRecord(body)) throw new ValidationError('Порожній запит');
+  return {
+    vehicle: body.vehicle === null || body.vehicle === undefined ? null : parseVehicle(body.vehicle),
+    startSocPct: num(body.startSocPct ?? 90, 'startSocPct', 1, 100),
+    targetSocPct: num(body.targetSocPct ?? 10, 'targetSocPct', 0, 100),
     filters: parseFilters(body.filters),
   };
 }
