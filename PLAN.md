@@ -68,7 +68,10 @@ eplan/
 | 6 | `planner.ts` + детекція платних доріг | ✅ |
 | 7 | Frontend: мапа, форма, підсумок, deep links | 🟡 рендер мапи в пікселях не перевірено |
 | 8 | Auth + збережені маршрути | ✅ |
-| 9 | Прив'язка домену `e.car-ua.com` | ⬜ **блокує `wrangler login`** |
+| 9 | Прив'язка домену `e.car-ua.com` | ✅ живий, HTTPS працює |
+
+Прод: **https://e.car-ua.com** (дубль для перевірок: https://eplan.a7design.workers.dev)
+Акаунт Cloudflare `a7design@gmail.com`, D1 `bfd7d49c-3950-4d08-9113-59b6197ceea5`, KV `9089a3ccff0b46d985d34dc4c7be00b3`.
 
 ### Що перевірено вживу
 - Берлін → Мюнхен, Kia EV6: 590 км, 2 зупинки, 40 хв зарядки, фініш 11 % — сходиться з ABRP.
@@ -80,7 +83,7 @@ eplan/
 1. **OCM_API_KEY** — без нього в БД лише dev-сід (`data/dev-stations.sql`, `data/dev-stations-es.sql`),
    тож будь-який маршрут поза цими коридорами буде «непроїзним». Отримати:
    openchargemap.org → my apps → Register An Application.
-2. **`wrangler login`** — потрібен для створення D1/KV і деплою.
+2. ~~`wrangler login`~~ — зроблено, ресурси створені, прод живий.
 
 ### Відомі обмеження моделі даних
 - Конектор `type2` не розрізняє AC Type 2 (11–22 кВт) і Tesla DC Type 2. Для старих
