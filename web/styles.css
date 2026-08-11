@@ -620,6 +620,12 @@ details.filters > div {
 
 .marker-waypoint {
   background: #1f6feb;
+  /* Точки маршруту перетягуються — курсор має про це говорити. */
+  cursor: grab;
+}
+
+.marker-waypoint:active {
+  cursor: grabbing;
 }
 
 .maplibregl-popup-content {
