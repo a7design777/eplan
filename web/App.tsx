@@ -32,6 +32,7 @@ export function App() {
   const [result, setResult] = useState<PlanResponse | null>(null);
   const [variant, setVariant] = useState<'primary' | 'tollFree'>('primary');
   const [planning, setPlanning] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -91,6 +92,41 @@ export function App() {
       .catch(() => {
         // Назва не критична — координати вже показані.
       });
+  }, []);
+
+  /** Поставити поточне місцеположення стартовою точкою. */
+  const useMyLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Браузер не підтримує геолокацію');
+      return;
+    }
+    setLocating(true);
+    setError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const { latitude: lat, longitude: lon } = coords;
+        const placeholder: Waypoint = { lat, lon, name: `${lat.toFixed(4)}, ${lon.toFixed(4)}` };
+        setSlots((prev) => prev.map((s, i) => (i === 0 ? placeholder : s)));
+        try {
+          const named = await api.reverse(lat, lon);
+          setSlots((prev) => prev.map((s, i) => (i === 0 ? named : s)));
+        } catch {
+          // Назва не критична — координати вже стоять.
+        } finally {
+          setLocating(false);
+        }
+      },
+      (err) => {
+        setLocating(false);
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Доступ до геолокації заборонено — дозвольте його в налаштуваннях браузера'
+            : 'Не вдалося визначити місцеположення',
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
   }, []);
 
   const movePoint = useCallback((index: number, lat: number, lon: number) => {
@@ -216,6 +252,17 @@ export function App() {
                     setSlots((prev) => prev.map((s, idx) => (idx === i ? w : s)))
                   }
                 />
+                {i === 0 && (
+                  <button
+                    className="btn-plain"
+                    title="Моє місцеположення"
+                    aria-label="Моє місцеположення"
+                    disabled={locating}
+                    onClick={useMyLocation}
+                  >
+                    {locating ? <span className="spinner" /> : '◎'}
+                  </button>
+                )}
                 {slots.length > 2 && (
                   <button
                     className="btn-plain"

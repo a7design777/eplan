@@ -61,6 +61,8 @@ function stationAt(id: number, km: number, powerKw = 150, lonOffset = 0): Statio
     portCount: 4,
     countryCode: 'DE',
     address: null,
+    usageCost: null,
+    accessType: 'public',
   };
 }
 

@@ -1,5 +1,6 @@
 import type { LatLon, RoutePlan } from '../../src/types';
 import { googleMapsPointLink, googleMapsRouteLinks, wazeLink } from '../lib/links';
+import { paymentHint, priceLabel } from '../lib/payment';
 
 const fmtDuration = (min: number): string => {
   const h = Math.floor(min / 60);
@@ -94,8 +95,11 @@ export function PlanSummary({ plan }: { plan: RoutePlan }) {
                 <span>{s.energyAddedKwh} кВт·год</span>
                 <span>{Math.round(s.distanceKm)} км від старту</span>
                 {s.detourKm >= 0.3 && <span>об'їзд {s.detourKm} км</span>}
-                {s.station.isFree && <span>безкоштовна</span>}
                 {s.station.networkName && <span>{s.station.networkName}</span>}
+              </div>
+              <div className="stop-pay">
+                <span className={s.station.isFree ? 'pay-free' : ''}>{paymentHint(s.station)}</span>
+                {priceLabel(s.station) && <span className="price">{priceLabel(s.station)}</span>}
               </div>
               <div className="stop-links">
                 <a

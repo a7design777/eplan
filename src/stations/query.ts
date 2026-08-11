@@ -1,4 +1,4 @@
-import type { ConnectorType, Env, PlanFilters, RoutePoint, Station } from '../types';
+import type { AccessType, ConnectorType, Env, PlanFilters, RoutePoint, Station } from '../types';
 import { corridorGeohashes } from '../lib/geo';
 
 /**
@@ -20,6 +20,8 @@ interface StationRowDb {
   port_count: number;
   country_code: string | null;
   address: string | null;
+  usage_cost: string | null;
+  access_type: string | null;
 }
 
 function toStation(r: StationRowDb): Station {
@@ -36,6 +38,8 @@ function toStation(r: StationRowDb): Station {
     portCount: r.port_count,
     countryCode: r.country_code,
     address: r.address,
+    usageCost: r.usage_cost,
+    accessType: (r.access_type as AccessType | null) ?? null,
   };
 }
 
@@ -90,7 +94,8 @@ export async function stationsAlongRoute(
     const chunk = cells.slice(i, i + MAX_CELLS_PER_QUERY);
     const sql =
       `SELECT s.id, s.name, s.lat, s.lon, s.max_power_kw, s.connectors, s.network_id,
-              n.name AS network_name, s.is_free, s.port_count, s.country_code, s.address
+              n.name AS network_name, s.is_free, s.port_count, s.country_code, s.address,
+              s.usage_cost, s.access_type
        FROM stations s
        LEFT JOIN networks n ON n.id = s.network_id
        WHERE s.geohash5 IN (${chunk.map(() => '?').join(',')})

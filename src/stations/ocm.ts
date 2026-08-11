@@ -1,4 +1,4 @@
-import type { ConnectorType } from '../types';
+import type { AccessType, ConnectorType } from '../types';
 // Розширення .ts обов'язкове: цей модуль тягне і бандлер Worker'а, і чистий Node
 // у scripts/fetch-stations.ts, а Node без розширення шлях не резолвить.
 import { geohashEncode } from '../lib/geo.ts';
@@ -54,6 +54,17 @@ export interface OcmPoi {
   Connections?: OcmConnection[] | null;
 }
 
+/** UsageTypeID з OpenChargeMap → спосіб доступу й оплати. */
+const USAGE_TYPE_MAP: Record<number, AccessType> = {
+  1: 'public',
+  2: 'restricted',
+  3: 'notice_required',
+  4: 'membership',
+  5: 'pay_at_location',
+  6: 'customers_only',
+  7: 'notice_required',
+};
+
 export interface StationRow {
   id: number;
   name: string;
@@ -67,6 +78,8 @@ export interface StationRow {
   portCount: number;
   countryCode: string | null;
   address: string | null;
+  usageCost: string | null;
+  accessType: AccessType | null;
 }
 
 /** StatusTypeID, які означають «станція не працює» — такі не імпортуємо. */
@@ -128,6 +141,8 @@ export function toStationRow(
     portCount: Math.max(portCount, poi.NumberOfPoints ?? 1),
     countryCode,
     address: address || null,
+    usageCost: poi.UsageCost?.trim() || null,
+    accessType: poi.UsageTypeID != null ? (USAGE_TYPE_MAP[poi.UsageTypeID] ?? null) : null,
   };
 }
 

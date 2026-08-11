@@ -1,11 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import type { Map as MlMap, Marker } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { RoutePlan, Waypoint } from '../../src/types';
-
-// OpenFreeMap — безкоштовні векторні тайли без ключа й лімітів.
-const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+import { loadMapStyle, MAP_STYLES, saveMapStyle, type MapStyle } from '../lib/map-styles';
+import { paymentHint, priceLabel } from '../lib/payment';
 
 const EMPTY_LINE = {
   type: 'Feature',
@@ -26,11 +25,15 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const markersRef = useRef<Marker[]>([]);
+  const [style, setStyle] = useState<MapStyle>(loadMapStyle);
 
   // Колбеки міняються на кожен рендер, а слухач мапи вішається раз — тримаємо
   // їх у ref, щоб не перепідписуватись і не пересоздавати мапу.
   const handlersRef = useRef({ onPickPoint, onMovePoint });
   handlersRef.current = { onPickPoint, onMovePoint };
+
+  const styleRef = useRef(style);
+  styleRef.current = style;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -38,7 +41,7 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
 
     const map = new maplibregl.Map({
       container,
-      style: STYLE_URL,
+      style: styleRef.current.url,
       center: [14, 50],
       zoom: 4,
       attributionControl: { compact: true },
@@ -75,7 +78,7 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
     // `load` не можна: якщо стиль дозавантажився до підписки (або взагалі не
     // догрузився), маршрут так і не з'явиться.
     const render = () => {
-      if (!ensureRouteLayers(map)) return;
+      if (!ensureRouteLayers(map, styleRef.current.dark)) return;
 
       const source = map.getSource('route') as maplibregl.GeoJSONSource | undefined;
       if (!source) return;
@@ -105,10 +108,13 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
       });
 
       (plan?.stops ?? []).forEach((s, i) => {
+        const price = priceLabel(s.station);
         const html =
           `<strong>${escapeHtml(s.station.name)}</strong><br/>` +
           `${s.totalStopMin} хв · ${Math.round(s.arrivalSocPct)} → ${Math.round(s.departureSocPct)} %<br/>` +
-          `${Math.round(s.station.maxPowerKw)} кВт${s.station.networkName ? ` · ${escapeHtml(s.station.networkName)}` : ''}`;
+          `${Math.round(s.station.maxPowerKw)} кВт${s.station.networkName ? ` · ${escapeHtml(s.station.networkName)}` : ''}<br/>` +
+          `${escapeHtml(paymentHint(s.station))}` +
+          (price ? `<br/><strong>${escapeHtml(price)}</strong>` : '');
         markersRef.current.push(
           addMarker(map, s.station.lon, s.station.lat, String(i + 1), 'marker-charge', html),
         );
@@ -126,20 +132,47 @@ export function MapView({ plan, waypoints, onPickPoint, onMovePoint }: Props) {
     };
 
     render();
+    // Зміна стилю стирає всі додані шари — `styledata` повертає маршрут на місце.
     map.on('styledata', render);
     return () => {
       map.off('styledata', render);
     };
-  }, [plan, waypoints]);
+  }, [plan, waypoints, style]);
 
-  return <div className="map" ref={containerRef} />;
+  const appliedStyleRef = useRef(style.id);
+  useEffect(() => {
+    const map = mapRef.current;
+    // Мапа вже створена з початковим стилем — перевстановлювати його не треба.
+    if (!map || appliedStyleRef.current === style.id) return;
+    appliedStyleRef.current = style.id;
+    map.setStyle(style.url);
+    saveMapStyle(style.id);
+  }, [style]);
+
+  return (
+    <>
+      <div className="map" ref={containerRef} />
+      <div className="map-styles">
+        {MAP_STYLES.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            aria-pressed={s.id === style.id}
+            onClick={() => setStyle(s)}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
 }
 
 /**
  * Створює шар маршруту, якщо його ще немає. Повертає false, поки стиль не готовий
  * прийняти джерела — тоді малювання повториться на наступному `styledata`.
  */
-function ensureRouteLayers(map: MlMap): boolean {
+function ensureRouteLayers(map: MlMap, dark: boolean): boolean {
   if (map.getLayer('route-line')) return true;
   try {
     if (!map.getSource('route')) {
@@ -152,7 +185,12 @@ function ensureRouteLayers(map: MlMap): boolean {
         type: 'line',
         source: 'route',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#0b3d21', 'line-width': 8, 'line-opacity': 0.5 },
+        // На темній мапі темна підкладка зливається з фоном — там світліша.
+        paint: {
+          'line-color': dark ? '#e9fff3' : '#0b3d21',
+          'line-width': 8,
+          'line-opacity': dark ? 0.35 : 0.5,
+        },
       });
     }
     map.addLayer({
@@ -160,7 +198,7 @@ function ensureRouteLayers(map: MlMap): boolean {
       type: 'line',
       source: 'route',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': '#22a35f', 'line-width': 4 },
+      paint: { 'line-color': dark ? '#3ddc84' : '#22a35f', 'line-width': 4 },
     });
     return true;
   } catch {

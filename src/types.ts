@@ -50,6 +50,18 @@ export interface Vehicle {
   chargeCurve: ChargeCurvePoint[];
 }
 
+/**
+ * Як платити на станції. Береться з UsageTypeID OpenChargeMap —
+ * єдиного поля про оплату, що має сталу структуру.
+ */
+export type AccessType =
+  | 'public'
+  | 'pay_at_location'
+  | 'membership'
+  | 'notice_required'
+  | 'customers_only'
+  | 'restricted';
+
 export interface Station {
   id: number;
   name: string;
@@ -64,6 +76,9 @@ export interface Station {
   portCount: number;
   countryCode: string | null;
   address: string | null;
+  /** Ціна дослівно з OCM: «0,59 €/kWh», «Free», «see app». null — невідомо. */
+  usageCost: string | null;
+  accessType: AccessType | null;
 }
 
 export interface PlanFilters {
