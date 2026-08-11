@@ -1,5 +1,7 @@
 import type { ConnectorType } from '../types';
-import { geohashEncode } from '../lib/geo';
+// Розширення .ts обов'язкове: цей модуль тягне і бандлер Worker'а, і чистий Node
+// у scripts/fetch-stations.ts, а Node без розширення шлях не резолвить.
+import { geohashEncode } from '../lib/geo.ts';
 
 export const OCM_API = 'https://api.openchargemap.io/v3';
 
