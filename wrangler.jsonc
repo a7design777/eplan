@@ -13,12 +13,16 @@
 
   "observability": { "enabled": true },
 
+  "routes": [{ "pattern": "e.car-ua.com", "custom_domain": true }],
+
+  // Лишаємо *.workers.dev увімкненим: зручно перевіряти деплой, не чіпаючи бойовий домен.
+  "workers_dev": true,
+
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "eplan",
-      // заповнюється після `wrangler d1 create eplan`
-      "database_id": "REPLACE_WITH_D1_ID",
+      "database_id": "bfd7d49c-3950-4d08-9113-59b6197ceea5",
       "migrations_dir": "migrations"
     }
   ],
@@ -26,8 +30,7 @@
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      // заповнюється після `wrangler kv namespace create CACHE`
-      "id": "REPLACE_WITH_KV_ID"
+      "id": "9089a3ccff0b46d985d34dc4c7be00b3"
     }
   ],
 
