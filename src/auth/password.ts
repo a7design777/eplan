@@ -4,7 +4,11 @@
  * WebCrypto у Workers не має ні scrypt, ні argon2, а тягти WASM заради цього
  * не хочеться. PBKDF2 з великою кількістю ітерацій — прийнятний компроміс.
  */
-const ITERATIONS = 210_000;
+/**
+ * 100 000 — це стеля WebCrypto у Workers, більше рантайм просто відхиляє
+ * («iteration counts above 100000 are not supported»). Не піднімати.
+ */
+const ITERATIONS = 100_000;
 const KEY_LENGTH_BITS = 256;
 const SALT_BYTES = 16;
 
