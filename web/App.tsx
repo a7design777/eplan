@@ -6,7 +6,13 @@ import { PlanSummary } from './components/PlanSummary';
 import { Filters } from './components/Filters';
 import { VehiclePicker } from './components/VehiclePicker';
 import { AuthDialog } from './components/AuthDialog';
-import { loadLocalPrefs, saveLocalPrefs } from './lib/prefs';
+import { StationLayer } from './components/StationLayer';
+import {
+  loadLocalPrefs,
+  loadMapNetworks,
+  saveLocalPrefs,
+  saveMapNetworks,
+} from './lib/prefs';
 import { clearRouteLink, decodeRouteLink, encodeRouteLink } from './lib/share';
 import type {
   PlanFilters,
@@ -54,6 +60,8 @@ export function App() {
 
   const [pickMode, setPickMode] = useState(false);
   const [showStations, setShowStations] = useState(false);
+  // Мережі для шару на мапі — окремо від улюблених у фільтрах.
+  const [mapNetworkIds, setMapNetworkIds] = useState<number[]>(loadMapNetworks);
   const [browseStations, setBrowseStations] = useState<Station[]>([]);
   const [bbox, setBbox] = useState<Bbox | null>(null);
   const [planning, setPlanning] = useState(false);
@@ -164,7 +172,7 @@ export function App() {
     let cancelled = false;
     const timer = setTimeout(() => {
       api
-        .stations(bbox, filters.preferredNetworkIds, filters.minPowerKw)
+        .stations(bbox, mapNetworkIds, filters.minPowerKw)
         .then((s) => !cancelled && setBrowseStations(s))
         .catch(() => !cancelled && setBrowseStations([]));
     }, 300);
@@ -173,7 +181,9 @@ export function App() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [showStations, bbox, filters.preferredNetworkIds, filters.minPowerKw]);
+  }, [showStations, bbox, mapNetworkIds, filters.minPowerKw]);
+
+  useEffect(() => saveMapNetworks(mapNetworkIds), [mapNetworkIds]);
 
   /**
    * Клік по мапі заповнює перший порожній слот, а якщо порожніх немає —
@@ -567,16 +577,22 @@ export function App() {
           <button
             className={`map-toggle${showStations ? ' on' : ''}`}
             onClick={() => setShowStations((v) => !v)}
-            title={
-              filters.preferredNetworkIds.length > 0
-                ? 'Показати станції улюблених мереж'
-                : 'Показати станції (оберіть улюблені мережі у фільтрах, щоб звузити)'
-            }
+            title="Показати станції на мапі та обрати мережі"
           >
             {showStations ? '✓ Станції' : '○ Станції'}
-            {showStations && browseStations.length > 0 && ` (${browseStations.length})`}
+            {showStations && mapNetworkIds.length > 0 && ` · ${mapNetworkIds.length} мереж`}
           </button>
         </div>
+
+        {showStations && (
+          <StationLayer
+            networks={networks}
+            selected={mapNetworkIds}
+            count={browseStations.length}
+            onChange={setMapNetworkIds}
+            onClose={() => setShowStations(false)}
+          />
+        )}
       </div>
 
       {showAuth && (
