@@ -20,6 +20,8 @@ interface Props {
   browseStations: Station[];
   /** Мапу зрушили — треба перезапитати станції під нові межі. */
   onViewportChange: (b: Bbox) => void;
+  /** Чи ввімкнено режим постановки точок кліком. */
+  pickMode: boolean;
   /** Клік по вільному місцю мапи — додати точку маршруту. */
   onPickPoint: (lat: number, lon: number) => void;
   /** Маркер точки перетягнули на нове місце. */
@@ -31,6 +33,7 @@ export function MapView({
   waypoints,
   browseStations,
   onViewportChange,
+  pickMode,
   onPickPoint,
   onMovePoint,
 }: Props) {
@@ -42,8 +45,8 @@ export function MapView({
 
   // Колбеки міняються на кожен рендер, а слухач мапи вішається раз — тримаємо
   // їх у ref, щоб не перепідписуватись і не пересоздавати мапу.
-  const handlersRef = useRef({ onPickPoint, onMovePoint, onViewportChange });
-  handlersRef.current = { onPickPoint, onMovePoint, onViewportChange };
+  const handlersRef = useRef({ onPickPoint, onMovePoint, onViewportChange, pickMode });
+  handlersRef.current = { onPickPoint, onMovePoint, onViewportChange, pickMode };
 
   const browseMarkersRef = useRef<Marker[]>([]);
 
@@ -83,11 +86,13 @@ export function MapView({
     mapRef.current = map;
 
     const onClick = (e: maplibregl.MapMouseEvent) => {
+      // Точка ставиться лише уввімкненому режимі: інакше кожен клік по мапі,
+      // зроблений щоб її просто роздивитись, псував би маршрут.
+      if (!handlersRef.current.pickMode) return;
       // Кліки по маркерах сюди не доходять — maplibre зупиняє їх на елементі маркера.
       handlersRef.current.onPickPoint(e.lngLat.lat, e.lngLat.lng);
     };
     map.on('click', onClick);
-    map.getCanvas().style.cursor = 'crosshair';
 
     const onMoveEnd = () => {
       const b = map.getBounds();
@@ -214,6 +219,13 @@ export function MapView({
       browseMarkersRef.current = [];
     };
   }, [browseStations]);
+
+  // Курсор має підказувати, що зараз робить клік по мапі.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.getCanvas().style.cursor = pickMode ? 'crosshair' : '';
+  }, [pickMode]);
 
   const appliedStyleRef = useRef(style.id);
   useEffect(() => {

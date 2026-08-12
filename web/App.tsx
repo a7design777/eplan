@@ -50,6 +50,7 @@ export function App() {
   const [result, setResult] = useState<PlanResponse | null>(null);
   const [variant, setVariant] = useState<string>('primary');
 
+  const [pickMode, setPickMode] = useState(false);
   const [showStations, setShowStations] = useState(false);
   const [browseStations, setBrowseStations] = useState<Station[]>([]);
   const [bbox, setBbox] = useState<Bbox | null>(null);
@@ -499,24 +500,35 @@ export function App() {
           waypoints={waypoints}
           browseStations={browseStations}
           onViewportChange={setBbox}
+          pickMode={pickMode}
           onPickPoint={pickPoint}
           onMovePoint={movePoint}
         />
-        <div className="map-hint">
-          Клікніть по мапі, щоб поставити точку · маркер можна перетягнути
+
+        {pickMode && (
+          <div className="map-hint">Торкніться мапи, щоб поставити точку маршруту</div>
+        )}
+
+        <div className="map-toggles">
+          <button
+            className={`map-toggle${pickMode ? ' on' : ''}`}
+            onClick={() => setPickMode((v) => !v)}
+          >
+            {pickMode ? '✓ Ставлю точки' : '＋ Точка на мапі'}
+          </button>
+          <button
+            className={`map-toggle${showStations ? ' on' : ''}`}
+            onClick={() => setShowStations((v) => !v)}
+            title={
+              filters.preferredNetworkIds.length > 0
+                ? 'Показати станції улюблених мереж'
+                : 'Показати станції (оберіть улюблені мережі у фільтрах, щоб звузити)'
+            }
+          >
+            {showStations ? '✓ Станції' : '○ Станції'}
+            {showStations && browseStations.length > 0 && ` (${browseStations.length})`}
+          </button>
         </div>
-        <button
-          className={`map-toggle${showStations ? ' on' : ''}`}
-          onClick={() => setShowStations((v) => !v)}
-          title={
-            filters.preferredNetworkIds.length > 0
-              ? 'Показати станції улюблених мереж'
-              : 'Показати станції (оберіть улюблені мережі у фільтрах, щоб звузити)'
-          }
-        >
-          {showStations ? '● Станції на мапі' : '○ Станції на мапі'}
-          {showStations && browseStations.length > 0 && ` (${browseStations.length})`}
-        </button>
       </div>
 
       {showAuth && (
