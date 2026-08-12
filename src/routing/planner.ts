@@ -123,10 +123,21 @@ function score(
   params: StrategyParams,
   preferredNetworkIds: number[],
   nowSec: number,
+  vehicle: Vehicle,
 ): number {
   const span = Math.max(1, windowEndKm - windowStartKm);
-  const power = Math.min(1, c.station.maxPowerKw / 200);
   const detourPenalty = c.detourKm / 5;
+
+  /*
+   * Головне — не потужність сама по собі, а скільки часу забере стоянка.
+   * Різниця між 150 і 250 кВт це кілька хвилин, а між 150 і 11 кВт — години.
+   * Без цього планувальник спокійно ставив зупинку на 11 кВт біля дороги
+   * і планував там майже п'ять годин, бо вона просто трапилась ближче.
+   */
+  const effectivePowerKw = Math.max(1, Math.min(c.station.maxPowerKw, vehicle.maxDcPowerKw));
+  const referenceKwh = vehicle.batteryKwh * 0.3;
+  const chargeHours = referenceKwh / effectivePowerKw;
+  const timePenalty = chargeHours * 1.2;
   const freeBonus = c.station.isFree ? 0.15 : 0;
   const portBonus = Math.min(0.1, c.station.portCount / 80);
   const favouriteBonus =
@@ -149,10 +160,10 @@ function score(
 
   return (
     placement * 1.6 +
-    power * 0.9 +
     freeBonus +
     portBonus +
     favouriteBonus -
+    timePenalty -
     detourPenalty * 0.7 -
     fewPortsPenalty -
     stalePenalty
@@ -234,7 +245,7 @@ export function selectStops(
     let best = inWindow[0]!;
     let bestScore = -Infinity;
     for (const c of inWindow) {
-      const s = score(c, atKm, maxReachKm, params, filters.preferredNetworkIds, nowSec);
+      const s = score(c, atKm, maxReachKm, params, filters.preferredNetworkIds, nowSec, vehicle);
       if (s > bestScore) {
         bestScore = s;
         best = c;

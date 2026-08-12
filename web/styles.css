@@ -399,6 +399,8 @@ input[type='range'] {
 
 /* --- Фільтри --- */
 
+/* Згортання довгих блоків у панелі — щоб на телефоні не гортати екранами. */
+details.collapsible > summary,
 details.filters > summary {
   cursor: pointer;
   font-size: 11px;
@@ -409,16 +411,23 @@ details.filters > summary {
   list-style: none;
 }
 
+details.collapsible > summary::-webkit-details-marker,
 details.filters > summary::-webkit-details-marker {
   display: none;
 }
 
+details.collapsible > summary::before,
 details.filters > summary::before {
   content: '▸ ';
 }
 
+details.collapsible[open] > summary::before,
 details.filters[open] > summary::before {
   content: '▾ ';
+}
+
+details.collapsible[open] > summary {
+  margin-bottom: 8px;
 }
 
 details.filters > div {
@@ -650,8 +659,29 @@ details.filters > div {
 .station-layer-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 4px;
   font-size: 13px;
+}
+
+.station-layer-head strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.station-layer-head .collapse {
+  flex: none;
+  width: 22px;
+  padding: 2px;
+}
+
+/* Згорнута панель — один рядок, мапа лишається видимою. */
+.station-layer.collapsed {
+  width: auto;
+  max-width: calc(100% - 20px);
+  padding: 6px 8px;
 }
 
 .station-layer-meta {

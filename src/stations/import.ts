@@ -1,8 +1,10 @@
 import type { Env } from '../types';
 import { OCM_API, toStationRow, type OcmPoi } from './ocm';
 
-const MIN_POWER_KW = 50;
-const MAX_RESULTS = 5000;
+// Той самий поріг, що й у scripts/fetch-stations.ts — інакше cron поступово
+// вимивав би з дзеркала все, що нижче 50 кВт.
+const MIN_POWER_KW = 3;
+const MAX_RESULTS = 15000;
 const CURSOR_KEY = 'ocm_last_modified';
 const BATCH_SIZE = 200;
 

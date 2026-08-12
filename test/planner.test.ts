@@ -27,7 +27,7 @@ const filters: PlanFilters = {
   preferredNetworkIds: [],
   chargingStrategy: 'balanced',
   freeOnly: false,
-  minPowerKw: 50,
+  minPowerKw: 22,
   reserveSocPct: 10,
   maxDetourKm: 5,
   avoidTolls: false,
@@ -225,6 +225,42 @@ describe('улюблені мережі', () => {
 
     expect(pick([10])).toBe(10);
     expect(pick([20])).toBe(20);
+  });
+});
+
+describe('швидкість зарядки важливіша за близькість', () => {
+  const points = straightRoute(400);
+  const cum = cumulativeEnergyKwh(points, vehicle, { temperatureC: 20 });
+
+  it('не обирає 11 кВт поруч, коли за 30 км є 150 кВт', () => {
+    const повільна = { ...stationAt(1, 150, 11), name: 'Повільна 11 кВт' };
+    const швидка = { ...stationAt(2, 180, 150), name: 'Швидка 150 кВт' };
+    const candidates = projectStations([повільна, швидка], points, 5);
+
+    const r = selectStops(candidates, points, cum, request());
+    expect(r.stops[0]?.candidate.station.name).toBe('Швидка 150 кВт');
+  });
+
+  it('повільну бере, лише коли іншої немає', () => {
+    // 300 км: без зупинки не доїхати, але після зарядки решта дороги посильна.
+    const короткий = straightRoute(300);
+    const cum300 = cumulativeEnergyKwh(короткий, vehicle, { temperatureC: 20 });
+    const повільна = { ...stationAt(1, 150, 11), name: 'Повільна 11 кВт' };
+    const candidates = projectStations([повільна], короткий, 5);
+
+    const r = selectStops(candidates, короткий, cum300, request());
+    expect(r.stops[0]?.candidate.station.name).toBe('Повільна 11 кВт');
+    expect(r.unreachable).toBe(false);
+  });
+
+  it('між 150 і 250 кВт вирішує вже розташування, а не потужність', () => {
+    // Різниця в часі тут хвилини, тож ближча до потрібної позначки має виграти.
+    const ближча = { ...stationAt(1, 180, 150), name: 'Ближча 150' };
+    const дальша = { ...stationAt(2, 130, 250), name: 'Дальша 250' };
+    const candidates = projectStations([ближча, дальша], points, 5);
+
+    const r = selectStops(candidates, points, cum, request());
+    expect(r.stops[0]?.candidate.station.name).toBe('Ближча 150');
   });
 });
 

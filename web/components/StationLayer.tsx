@@ -18,6 +18,9 @@ interface Props {
  */
 export function StationLayer({ networks, selected, count, onChange, onClose }: Props) {
   const [query, setQuery] = useState('');
+  // На телефоні панель займає майже всю мапу — тому її можна згорнути
+  // в один рядок, не вимикаючи сам шар станцій.
+  const [collapsed, setCollapsed] = useState(false);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -35,14 +38,27 @@ export function StationLayer({ networks, selected, count, onChange, onClose }: P
   };
 
   return (
-    <div className="station-layer">
+    <div className={`station-layer${collapsed ? ' collapsed' : ''}`}>
       <div className="station-layer-head">
-        <strong>Станції на мапі</strong>
-        <button className="btn-plain" onClick={onClose} title="Закрити">
+        <button
+          className="btn-plain collapse"
+          onClick={() => setCollapsed((v) => !v)}
+          title={collapsed ? 'Розгорнути' : 'Згорнути'}
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? '▸' : '▾'}
+        </button>
+        <strong>
+          Станції{selected.length > 0 ? ` · ${selected.length}` : ''}
+          {collapsed && count > 0 ? ` · ${count} на екрані` : ''}
+        </strong>
+        <button className="btn-plain" onClick={onClose} title="Прибрати з мапи">
           ✕
         </button>
       </div>
 
+      {collapsed ? null : (
+      <>
       <input
         type="text"
         value={query}
@@ -75,6 +91,8 @@ export function StationLayer({ networks, selected, count, onChange, onClose }: P
         ))}
         {visible.length === 0 && <span className="muted">Нічого не знайдено</span>}
       </div>
+      </>
+      )}
     </div>
   );
 }

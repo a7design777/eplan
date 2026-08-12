@@ -42,6 +42,7 @@ export function MapView({
   const markersRef = useRef<Marker[]>([]);
   const [style, setStyle] = useState<MapStyle>(loadMapStyle);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [stylesOpen, setStylesOpen] = useState(false);
 
   // Колбеки міняються на кожен рендер, а слухач мапи вішається раз — тримаємо
   // їх у ref, щоб не перепідписуватись і не пересоздавати мапу.
@@ -256,17 +257,27 @@ export function MapView({
     <>
       <div className="map" ref={containerRef} />
       {mapError && <div className="map-error">{mapError}</div>}
-      <div className="map-styles">
-        {MAP_STYLES.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            aria-pressed={s.id === style.id}
-            onClick={() => setStyle(s)}
-          >
-            {s.label}
+      {/* Згорнутий стан показує лише активний стиль — решта екрана лишається мапою. */}
+      <div className={`map-styles${stylesOpen ? ' open' : ''}`}>
+        {stylesOpen ? (
+          MAP_STYLES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              aria-pressed={s.id === style.id}
+              onClick={() => {
+                setStyle(s);
+                setStylesOpen(false);
+              }}
+            >
+              {s.label}
+            </button>
+          ))
+        ) : (
+          <button type="button" onClick={() => setStylesOpen(true)} title="Змінити вигляд мапи">
+            {style.label} ▾
           </button>
-        ))}
+        )}
       </div>
     </>
   );

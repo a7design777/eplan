@@ -111,7 +111,7 @@ export function parseFilters(v: unknown): PlanFilters {
     ),
     freeOnly: f.freeOnly === true,
     // Нижня межа 2 кВт — щоб можна було шукати побутові розетки 220 В.
-    minPowerKw: num(f.minPowerKw ?? 50, 'filters.minPowerKw', 2, 400),
+    minPowerKw: num(f.minPowerKw ?? 22, 'filters.minPowerKw', 2, 400),
     reserveSocPct: num(f.reserveSocPct ?? 10, 'filters.reserveSocPct', 0, 50),
     maxDetourKm: num(f.maxDetourKm ?? 5, 'filters.maxDetourKm', 0.5, 30),
     avoidTolls: f.avoidTolls === true,

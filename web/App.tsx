@@ -30,7 +30,7 @@ const DEFAULT_FILTERS: PlanFilters = {
   preferredNetworkIds: [],
   chargingStrategy: 'balanced',
   freeOnly: false,
-  minPowerKw: 50,
+  minPowerKw: 22,
   reserveSocPct: 10,
   maxDetourKm: 5,
   avoidTolls: false,
@@ -527,8 +527,8 @@ export function App() {
           )}
 
           {user && saved.length > 0 && (
-            <div className="section">
-              <h2>Збережені маршрути</h2>
+            <details className="section collapsible">
+              <summary>Збережені маршрути ({saved.length})</summary>
               {saved.map((r) => (
                 <div className="saved-item" key={r.id}>
                   <button className="name" onClick={() => openSaved(r.id)} title={r.name}>
@@ -547,7 +547,7 @@ export function App() {
                   </button>
                 </div>
               ))}
-            </div>
+            </details>
           )}
         </div>
       </aside>

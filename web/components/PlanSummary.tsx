@@ -120,8 +120,8 @@ export function PlanSummary({ plan }: { plan: RoutePlan }) {
       ))}
 
       {plan.stops.length > 0 && (
-        <div className="section">
-          <h2>Зупинки на зарядку</h2>
+        <details className="section collapsible" open>
+          <summary>Зупинки на зарядку ({plan.stops.length})</summary>
           {plan.stops.map((s, i) => (
             <div className="stop" key={`${s.station.id}-${i}`}>
               <div className="stop-head">
@@ -176,7 +176,7 @@ export function PlanSummary({ plan }: { plan: RoutePlan }) {
               </div>
             </div>
           ))}
-        </div>
+        </details>
       )}
     </>
   );

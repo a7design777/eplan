@@ -13,13 +13,22 @@ import { writeFile } from 'node:fs/promises';
 import { EUROPE_COUNTRIES, OCM_API, toStationRow, type OcmPoi } from '../src/stations/ocm.ts';
 
 /**
- * За замовчуванням тягнемо лише швидкі станції — саме вони потрібні для планування
- * траси. Знизити поріг (напр. `MIN_POWER_KW=2`) означає забрати ще й повільні AC
- * та побутові розетки 220 В: це в рази більший обсяг даних і довший імпорт,
- * зате з'являються точки для нічної зарядки в кінцевій точці.
+ * 3 кВт, а не 50.
+ *
+ * Поріг у 50 кВт відсікав дві третини реальних станцій: у коридорі
+ * Альмуньєкар — Малага їх 88 проти 226 від 11 кВт. Через це планувальник
+ * не бачив зарядку поруч і вів у об'їзд за місто. Заразом це єдиний спосіб,
+ * щоб побутові розетки 220 В взагалі потрапляли в базу.
+ *
+ * Ціна рішення — база більшає приблизно вчетверо і імпорт довший.
  */
-const MIN_POWER_KW = Number(process.env.MIN_POWER_KW ?? 50);
-const MAX_RESULTS_PER_COUNTRY = 20000;
+const MIN_POWER_KW = Number(process.env.MIN_POWER_KW ?? 3);
+
+/**
+ * Ліміт із запасом: Німеччина від 3 кВт дає ~24k. Якщо країна впреться
+ * у стелю, скрипт про це скаже — мовчазне обрізання гірше за помилку.
+ */
+const MAX_RESULTS_PER_COUNTRY = 60000;
 const OUT_FILE = new URL('../data/stations.sql', import.meta.url);
 
 const apiKey = process.env.OCM_API_KEY;
@@ -120,7 +129,8 @@ for (const country of EUROPE_COUNTRIES) {
     );
   }
   total += kept;
-  console.log(`${country}: ${pois.length} POI → ${kept} станцій (разом ${total})`);
+  const capped = pois.length >= MAX_RESULTS_PER_COUNTRY ? '  ⚠ УПЕРЛОСЬ У ЛІМІТ' : '';
+  console.log(`${country}: ${pois.length} POI → ${kept} станцій (разом ${total})${capped}`);
 
   // Fair use: не молотимо API впритул.
   await new Promise((r) => setTimeout(r, 1200));
