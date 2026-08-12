@@ -10,6 +10,7 @@ export function AuthDialog({ onClose, onAuth }: Props) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -20,7 +21,7 @@ export function AuthDialog({ onClose, onAuth }: Props) {
     try {
       const user = mode === 'login'
         ? await api.login(email, password)
-        : await api.register(email, password);
+        : await api.register(email, password, inviteCode);
       onAuth(user);
       onClose();
     } catch (err) {
@@ -77,6 +78,20 @@ export function AuthDialog({ onClose, onAuth }: Props) {
           />
           {mode === 'register' && <span className="muted">Щонайменше 8 символів.</span>}
         </div>
+
+        {mode === 'register' && (
+          <div className="field">
+            <label htmlFor="auth-invite">Код запрошення</label>
+            <input
+              id="auth-invite"
+              type="text"
+              value={inviteCode}
+              autoComplete="off"
+              onChange={(e) => setInviteCode(e.target.value)}
+            />
+            <span className="muted">Реєстрація поки закрита — потрібен код.</span>
+          </div>
+        )}
 
         {error && <div className="banner banner-error">{error}</div>}
 

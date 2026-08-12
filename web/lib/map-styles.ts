@@ -29,6 +29,24 @@ function rasterStyle(tiles: string, attribution: string, maxzoom = 19): StyleSpe
   };
 }
 
+/**
+ * Супутник із накладеними підписами. На чистому супутнику немає жодної назви,
+ * тож знайти потрібний з'їзд практично неможливо — цей шар це виправляє.
+ */
+function hybridStyle(imagery: string, labels: string, attribution: string): StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      base: { type: 'raster', tiles: [imagery], tileSize: 256, attribution, maxzoom: 19 },
+      labels: { type: 'raster', tiles: [labels], tileSize: 256, maxzoom: 19 },
+    },
+    layers: [
+      { id: 'base', type: 'raster', source: 'base' },
+      { id: 'labels', type: 'raster', source: 'labels' },
+    ],
+  };
+}
+
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 
 export const MAP_STYLES: MapStyle[] = [
@@ -46,6 +64,16 @@ export const MAP_STYLES: MapStyle[] = [
     label: 'Супутник',
     style: rasterStyle(
       `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+      'Esri, Maxar, Earthstar Geographics',
+    ),
+    dark: true,
+  },
+  {
+    id: 'hybrid',
+    label: 'Гібрид',
+    style: hybridStyle(
+      `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+      `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
       'Esri, Maxar, Earthstar Geographics',
     ),
     dark: true,

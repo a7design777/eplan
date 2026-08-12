@@ -577,6 +577,26 @@ details.filters > div {
   font-weight: 600;
 }
 
+.stop-caution {
+  font-size: 12px;
+  color: var(--warn);
+}
+
+.cost {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.cost-value {
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--accent);
+}
+
 .stop-links {
   display: flex;
   gap: 6px;

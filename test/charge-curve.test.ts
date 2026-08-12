@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { chargeTime, powerAtSoc, requiredSocPct } from '../src/routing/charge-curve';
+import {
+  batteryTemperatureFactor,
+  chargeTime,
+  powerAtSoc,
+  requiredSocPct,
+} from '../src/routing/charge-curve';
 import type { Vehicle } from '../src/types';
 
 const ev6: Vehicle = {
@@ -90,6 +95,54 @@ describe('chargeTime', () => {
     const r = chargeTime(ev6, 10, 80, 350);
     expect(r.averagePowerKw).toBeLessThanOrEqual(ev6.maxDcPowerKw);
     expect(r.averagePowerKw).toBeGreaterThan(50);
+  });
+});
+
+describe('batteryTemperatureFactor', () => {
+  it('у комфортному діапазоні не ріже потужність', () => {
+    expect(batteryTemperatureFactor(20)).toBe(1);
+    expect(batteryTemperatureFactor(15)).toBe(1);
+    expect(batteryTemperatureFactor(35)).toBe(1);
+  });
+
+  it('на нулі приймається приблизно половина', () => {
+    const f = batteryTemperatureFactor(0);
+    expect(f).toBeGreaterThan(0.5);
+    expect(f).toBeLessThan(0.7);
+  });
+
+  it('на сильному морозі падіння різке, але не до нуля', () => {
+    expect(batteryTemperatureFactor(-15)).toBeLessThan(0.35);
+    expect(batteryTemperatureFactor(-30)).toBeGreaterThanOrEqual(0.2);
+  });
+
+  it('чим холодніше, тим менше — монотонно', () => {
+    for (let t = -20; t < 15; t += 5) {
+      expect(batteryTemperatureFactor(t)).toBeLessThan(batteryTemperatureFactor(t + 5));
+    }
+  });
+
+  it('спека ріже, але значно менше за мороз', () => {
+    expect(batteryTemperatureFactor(45)).toBeLessThan(1);
+    expect(batteryTemperatureFactor(45)).toBeGreaterThan(batteryTemperatureFactor(0));
+  });
+});
+
+describe('зарядка на морозі', () => {
+  it('та сама зупинка взимку триває помітно довше', () => {
+    const тепло = chargeTime(ev6, 20, 70, 350, Infinity, 20).durationMin;
+    const мороз = chargeTime(ev6, 20, 70, 350, Infinity, -10).durationMin;
+    expect(мороз).toBeGreaterThan(тепло * 1.8);
+  });
+
+  it('додана енергія не залежить від температури — лише час', () => {
+    const тепло = chargeTime(ev6, 20, 70, 350, Infinity, 20);
+    const мороз = chargeTime(ev6, 20, 70, 350, Infinity, -10);
+    expect(мороз.energyAddedKwh).toBeCloseTo(тепло.energyAddedKwh, 5);
+  });
+
+  it('потужність на морозі нижча за паспортну', () => {
+    expect(powerAtSoc(ev6, 20, 350, -10)).toBeLessThan(powerAtSoc(ev6, 20, 350, 20));
   });
 });
 

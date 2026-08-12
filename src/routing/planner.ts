@@ -11,11 +11,49 @@ import type {
 import { distanceToPolylineKm } from '../lib/geo';
 import { stationsAlongRoute } from '../stations/query';
 import { chargeTime, requiredSocPct } from './charge-curve';
+import { stopCost, tripCost } from './pricing';
 import { cumulativeEnergyKwh, energyAtDistanceKwh } from './consumption';
 import type { RouteResult, RoutingProvider } from './provider';
 
 /** Під'їзд, підключення, оплата — фіксована накладна на кожну зупинку. */
 const STOP_OVERHEAD_MIN = 5;
+/** Менше портів — реальний ризик стати в чергу. */
+const FEW_PORTS = 2;
+/**
+ * Понад стільки без підтвердження в OCM — станція могла зникнути.
+ *
+ * Чотири роки, а не два: у базі половина записів старша за два роки, тож поріг
+ * у 2 роки давав би попередження на кожній другій зупинці — це шум, а не сигнал.
+ * За чотирма роками лишається чверть станцій, і це вже щось значить.
+ */
+const STALE_AFTER_DAYS = 1460;
+
+/** Попередження про конкретну станцію: те, що варто знати до виїзду. */
+function stationCautions(station: Station, nowSec: number): string[] {
+  const out: string[] = [];
+
+  if (station.portCount <= FEW_PORTS) {
+    out.push(
+      station.portCount === 1
+        ? 'Лише один порт — можна потрапити в чергу'
+        : `Портів лише ${station.portCount} — можлива черга`,
+    );
+  }
+
+  if (station.lastVerified === null) {
+    out.push('Дані не підтверджені — станція може не працювати');
+  } else if (isStale(station, nowSec)) {
+    const years = Math.floor((nowSec - station.lastVerified) / 86400 / 365);
+    out.push(`Дані не оновлювались ${years} р. — перевірте перед виїздом`);
+  }
+
+  return out;
+}
+
+function isStale(station: Station, nowSec: number): boolean {
+  if (station.lastVerified === null) return true;
+  return (nowSec - station.lastVerified) / 86400 > STALE_AFTER_DAYS;
+}
 /** Крок профілю висот у запиті до рушія, м. */
 const ELEVATION_INTERVAL_M = 100;
 
@@ -84,6 +122,7 @@ function score(
   windowEndKm: number,
   params: StrategyParams,
   preferredNetworkIds: number[],
+  nowSec: number,
 ): number {
   const span = Math.max(1, windowEndKm - windowStartKm);
   const power = Math.min(1, c.station.maxPowerKw / 200);
@@ -92,6 +131,11 @@ function score(
   const portBonus = Math.min(0.1, c.station.portCount / 80);
   const favouriteBonus =
     c.station.networkId !== null && preferredNetworkIds.includes(c.station.networkId) ? 0.8 : 0;
+
+  // Станції з одним портом і давно не підтверджені менш надійні — знижуємо,
+  // але не відкидаємо: інколи іншої поруч просто немає.
+  const fewPortsPenalty = c.station.portCount <= FEW_PORTS ? 0.25 : 0;
+  const stalePenalty = isStale(c.station, nowSec) ? 0.2 : 0;
 
   // При «частих коротких» їхати якнайдалі не треба — цінна зарядка біля позначки.
   let placement: number;
@@ -103,7 +147,16 @@ function score(
     placement = (c.distanceKm - windowStartKm) / span;
   }
 
-  return placement * 1.6 + power * 0.9 + freeBonus + portBonus + favouriteBonus - detourPenalty * 0.7;
+  return (
+    placement * 1.6 +
+    power * 0.9 +
+    freeBonus +
+    portBonus +
+    favouriteBonus -
+    detourPenalty * 0.7 -
+    fewPortsPenalty -
+    stalePenalty
+  );
 }
 
 interface SelectedStop {
@@ -127,6 +180,7 @@ export function selectStops(
   const totalKm = points[points.length - 1]?.distanceKm ?? 0;
   const warnings: string[] = [];
   const stops: SelectedStop[] = [];
+  const nowSec = Math.floor(Date.now() / 1000);
 
   let socPct = req.startSocPct;
   let atKm = 0;
@@ -180,7 +234,7 @@ export function selectStops(
     let best = inWindow[0]!;
     let bestScore = -Infinity;
     for (const c of inWindow) {
-      const s = score(c, atKm, maxReachKm, params, filters.preferredNetworkIds);
+      const s = score(c, atKm, maxReachKm, params, filters.preferredNetworkIds, nowSec);
       if (s > bestScore) {
         bestScore = s;
         best = c;
@@ -246,6 +300,7 @@ export function trimStops(
   const totalKm = points[points.length - 1]?.distanceKm ?? 0;
   const warnings: string[] = [];
   const stops: ChargeStop[] = [];
+  const nowSec = Math.floor(Date.now() / 1000);
 
   let socPct = req.startSocPct;
   let atKm = 0;
@@ -274,7 +329,14 @@ export function trimStops(
     targetSoc = Math.min(ceiling, Math.max(targetSoc, arrivalSocPct));
 
     const stationPowerKw = cur.candidate.station.maxPowerKw;
-    const result = chargeTime(vehicle, arrivalSocPct, targetSoc, stationPowerKw);
+    const result = chargeTime(
+      vehicle,
+      arrivalSocPct,
+      targetSoc,
+      stationPowerKw,
+      Infinity,
+      filters.temperatureC,
+    );
 
     if (result.endSocPct + 0.5 < targetSoc) {
       warnings.push(
@@ -292,6 +354,8 @@ export function trimStops(
       energyAddedKwh: round1(result.energyAddedKwh),
       detourKm: round1(cur.candidate.detourKm),
       averagePowerKw: Math.round(result.averagePowerKw),
+      cost: stopCost(cur.candidate.station, result.energyAddedKwh),
+      cautions: stationCautions(cur.candidate.station, nowSec),
     });
 
     socPct = result.endSocPct;
@@ -352,6 +416,7 @@ export async function planForRoute(
     // ніж число, яке виглядає як справжній результат.
     arrivalSocPct: selection.unreachable ? null : trimmed.arrivalSocPct,
     totalEnergyKwh: round1(cumulative[cumulative.length - 1] ?? 0),
+    cost: tripCost(trimmed.stops.map((s) => s.cost)),
     tolls: {
       hasTolls: route.hasToll,
       countries: [],

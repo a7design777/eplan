@@ -127,18 +127,30 @@ export function Filters({ filters, networks, vehicleConnectors, onChange }: Prop
             />
           </div>
           <div className="field">
-            <label htmlFor="f-temp">Температура, °C</label>
+            <label htmlFor="f-temp">
+              Температура, °C {filters.useLiveWeather && '(з прогнозу)'}
+            </label>
             <input
               id="f-temp"
               type="number"
               min={-40}
               max={55}
               step={1}
+              disabled={filters.useLiveWeather}
               value={filters.temperatureC}
               onChange={(e) => onChange({ temperatureC: Number(e.target.value) })}
             />
           </div>
         </div>
+
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={filters.useLiveWeather}
+            onChange={(e) => onChange({ useLiveWeather: e.target.checked })}
+          />
+          Брати температуру з прогнозу
+        </label>
 
         <label className="check">
           <input

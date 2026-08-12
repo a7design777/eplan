@@ -10,6 +10,7 @@ import {
 } from './api/validate';
 import { plan } from './routing/planner';
 import { ValhallaProvider } from './routing/valhalla';
+import { temperatureAt } from './routing/weather';
 import { importStations } from './stations/import';
 import { stationsInBbox } from './stations/query';
 import type { Env, Vehicle } from './types';
@@ -137,15 +138,33 @@ api.get('/stations', async (c) => {
 
 api.post('/plan', async (c) => {
   const req = parsePlanRequest(await c.req.json());
+
+  // Реальна температура точніша за ту, що користувач вгадав. Якщо він задав її
+  // явно (useLiveWeather вимкнено) або погода недоступна — лишаємо його число.
+  if (req.filters.useLiveWeather) {
+    const mid = req.waypoints[Math.floor(req.waypoints.length / 2)]!;
+    const live = await temperatureAt(c.env, mid);
+    if (live !== null) req.filters.temperatureC = live;
+  }
+
   const provider = new ValhallaProvider(c.env);
   const result = await plan(c.env, provider, req);
-  return c.json(result);
+  return c.json({ ...result, temperatureC: req.filters.temperatureC });
 });
 
 // --- Авторизація ---
 
 api.post('/auth/register', async (c) => {
-  const { email, password } = parseCredentials(await c.req.json());
+  const body = (await c.req.json()) as { inviteCode?: unknown };
+  const { email, password } = parseCredentials(body);
+
+  // Поки код заданий у секретах — реєстрація тільки за ним.
+  if (c.env.INVITE_CODE) {
+    const given = typeof body.inviteCode === 'string' ? body.inviteCode.trim() : '';
+    if (given !== c.env.INVITE_CODE) {
+      return c.json({ error: 'Потрібен код запрошення', inviteRequired: true }, 403);
+    }
+  }
 
   const existing = await c.env.DB.prepare('SELECT id FROM users WHERE email = ?')
     .bind(email)

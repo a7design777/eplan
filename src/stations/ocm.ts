@@ -43,6 +43,8 @@ export interface OcmPoi {
   UsageTypeID?: number | null;
   StatusTypeID?: number | null;
   NumberOfPoints?: number | null;
+  DateLastVerified?: string | null;
+  DateLastStatusUpdate?: string | null;
   AddressInfo?: {
     Title?: string | null;
     Latitude?: number;
@@ -80,6 +82,7 @@ export interface StationRow {
   address: string | null;
   usageCost: string | null;
   accessType: AccessType | null;
+  lastVerified: number | null;
 }
 
 /** StatusTypeID, які означають «станція не працює» — такі не імпортуємо. */
@@ -143,7 +146,15 @@ export function toStationRow(
     address: address || null,
     usageCost: poi.UsageCost?.trim() || null,
     accessType: poi.UsageTypeID != null ? (USAGE_TYPE_MAP[poi.UsageTypeID] ?? null) : null,
+    lastVerified: parseOcmDate(poi.DateLastVerified ?? poi.DateLastStatusUpdate),
   };
+}
+
+/** Дата OCM (ISO) → unix-час. Битий рядок трактуємо як «невідомо». */
+function parseOcmDate(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : null;
 }
 
 /** Країни Європи, які імпортуємо (ISO 3166-1 alpha-2). */

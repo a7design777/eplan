@@ -7,6 +7,7 @@ import { Filters } from './components/Filters';
 import { VehiclePicker } from './components/VehiclePicker';
 import { AuthDialog } from './components/AuthDialog';
 import { loadLocalPrefs, saveLocalPrefs } from './lib/prefs';
+import { clearRouteLink, decodeRouteLink, encodeRouteLink } from './lib/share';
 import type {
   PlanFilters,
   PlanRequest,
@@ -27,6 +28,7 @@ const DEFAULT_FILTERS: PlanFilters = {
   reserveSocPct: 10,
   maxDetourKm: 5,
   avoidTolls: false,
+  useLiveWeather: true,
   temperatureC: 15,
 };
 
@@ -61,6 +63,19 @@ export function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [saved, setSaved] = useState<SavedRouteSummary[]>([]);
+
+  // Маршрут із посилання. Читаємо один раз: далі стан живе своїм життям.
+  const shared = useMemo(() => decodeRouteLink(), []);
+
+  useEffect(() => {
+    if (!shared) return;
+    setSlots(shared.waypoints);
+    setVehicle(shared.vehicle);
+    setStartSocPct(shared.startSocPct);
+    setTargetSocPct(shared.targetSocPct);
+    setFilters({ ...DEFAULT_FILTERS, ...shared.filters });
+    clearRouteLink();
+  }, [shared]);
 
   useEffect(() => {
     api.vehicles().then((list) => {
@@ -287,6 +302,32 @@ export function App() {
     }
   };
 
+  const [shareLabel, setShareLabel] = useState('Поділитись');
+
+  const share = async () => {
+    const req = buildRequest();
+    if (!req) return;
+    const link = encodeRouteLink(req);
+    const title = `${req.waypoints[0]?.name ?? 'Старт'} → ${req.waypoints[req.waypoints.length - 1]?.name ?? 'Фініш'}`;
+
+    // На телефоні системний «поділитись» зручніший за копіювання в буфер.
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url: link });
+        return;
+      } catch {
+        // Користувач закрив вікно або система відмовила — падаємо на буфер.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      setShareLabel('Скопійовано ✓');
+      setTimeout(() => setShareLabel('Поділитись'), 2000);
+    } catch {
+      setError('Не вдалося скопіювати посилання');
+    }
+  };
+
   const openSaved = async (id: string) => {
     try {
       const row = await api.savedRoute(id);
@@ -462,10 +503,17 @@ export function App() {
 
           {shownPlan && <PlanSummary plan={shownPlan} />}
 
-          {shownPlan && user && (
-            <button className="btn" onClick={save}>
-              Зберегти маршрут
-            </button>
+          {shownPlan && (
+            <div className="row">
+              <button className="btn" onClick={share}>
+                {shareLabel}
+              </button>
+              {user && (
+                <button className="btn" onClick={save}>
+                  Зберегти маршрут
+                </button>
+              )}
+            </div>
           )}
 
           {user && saved.length > 0 && (

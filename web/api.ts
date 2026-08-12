@@ -70,8 +70,11 @@ export const api = {
     request<PlanResponse>('/plan', { method: 'POST', body: JSON.stringify(body) }),
 
   me: () => request<AuthUser>('/auth/me'),
-  register: (email: string, password: string) =>
-    request<AuthUser>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  register: (email: string, password: string, inviteCode: string) =>
+    request<AuthUser>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, inviteCode }),
+    }),
   login: (email: string, password: string) =>
     request<AuthUser>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   logout: () => request<{ ok: true }>('/auth/logout', { method: 'POST' }),

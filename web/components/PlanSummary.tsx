@@ -49,6 +49,20 @@ export function PlanSummary({ plan }: { plan: RoutePlan }) {
           </div>
         </div>
 
+        {plan.cost && (plan.cost.total > 0 || plan.cost.unknownStops === 0) && (
+          <div className="cost">
+            <span className="cost-value">
+              {plan.cost.unknownStops > 0 && 'від '}
+              {plan.cost.total.toFixed(2)} {plan.cost.currency}
+            </span>
+            <span className="muted">
+              за зарядки
+              {plan.cost.unknownStops > 0 &&
+                ` · ${plan.cost.unknownStops} ${plan.cost.unknownStops === 1 ? 'зупинка' : 'зупинок'} без ціни`}
+            </span>
+          </div>
+        )}
+
         <div className="stop-links">
           {gmapsLinks.map((href, i) => (
             <a key={href} className="link-btn" href={href} target="_blank" rel="noreferrer">
@@ -130,7 +144,18 @@ export function PlanSummary({ plan }: { plan: RoutePlan }) {
               <div className="stop-pay">
                 <span className={s.station.isFree ? 'pay-free' : ''}>{paymentHint(s.station)}</span>
                 {priceLabel(s.station) && <span className="price">{priceLabel(s.station)}</span>}
+                {s.cost && s.cost.amount > 0 && (
+                  <span className="price">
+                    ≈ {s.cost.amount.toFixed(2)} {s.cost.currency}
+                  </span>
+                )}
               </div>
+
+              {s.cautions.map((c) => (
+                <div className="stop-caution" key={c}>
+                  ⚠ {c}
+                </div>
+              ))}
               <div className="stop-links">
                 <a
                   className="link-btn"

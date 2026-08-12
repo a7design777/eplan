@@ -31,6 +31,7 @@ const filters: PlanFilters = {
   reserveSocPct: 10,
   maxDetourKm: 5,
   avoidTolls: false,
+  useLiveWeather: true,
   temperatureC: 20,
 };
 
@@ -65,6 +66,7 @@ function stationAt(id: number, km: number, powerKw = 150, lonOffset = 0): Statio
     address: null,
     usageCost: null,
     accessType: 'public',
+    lastVerified: null,
   };
 }
 

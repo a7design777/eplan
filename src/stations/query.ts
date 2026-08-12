@@ -22,6 +22,7 @@ interface StationRowDb {
   address: string | null;
   usage_cost: string | null;
   access_type: string | null;
+  last_verified: number | null;
 }
 
 function toStation(r: StationRowDb): Station {
@@ -40,6 +41,7 @@ function toStation(r: StationRowDb): Station {
     address: r.address,
     usageCost: r.usage_cost,
     accessType: (r.access_type as AccessType | null) ?? null,
+    lastVerified: r.last_verified,
   };
 }
 
@@ -71,7 +73,7 @@ export async function stationsInBbox(env: Env, q: BboxQuery): Promise<Station[]>
   const { results } = await env.DB.prepare(
     `SELECT s.id, s.name, s.lat, s.lon, s.max_power_kw, s.connectors, s.network_id,
             n.name AS network_name, s.is_free, s.port_count, s.country_code, s.address,
-            s.usage_cost, s.access_type
+            s.usage_cost, s.access_type, s.last_verified
      FROM stations s
      LEFT JOIN networks n ON n.id = s.network_id
      WHERE ${conditions.join(' AND ')}
@@ -136,7 +138,7 @@ export async function stationsAlongRoute(
     const sql =
       `SELECT s.id, s.name, s.lat, s.lon, s.max_power_kw, s.connectors, s.network_id,
               n.name AS network_name, s.is_free, s.port_count, s.country_code, s.address,
-              s.usage_cost, s.access_type
+              s.usage_cost, s.access_type, s.last_verified
        FROM stations s
        LEFT JOIN networks n ON n.id = s.network_id
        WHERE s.geohash5 IN (${chunk.map(() => '?').join(',')})

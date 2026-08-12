@@ -4,10 +4,36 @@ import type { Vehicle } from '../types';
 const CHARGING_EFFICIENCY = 0.92;
 
 /**
+ * Множник потужності зарядки від температури батареї.
+ *
+ * Холодний акумулятор фізично не приймає струм: літій не встигає інтеркалюватись,
+ * і BMS ріже потужність, щоб не осаджувати метал на аноді. На морозі це найбільша
+ * похибка планування — обіцяєш 20 хв, а реально стоїш 40.
+ *
+ * Числа орієнтовні: без преконденціонування при 0 °C авто бере приблизно половину
+ * від паспортної потужності, при -15 °C — близько чверті. Спека теж ріже, але значно
+ * менше і лише на високих SoC.
+ */
+export function batteryTemperatureFactor(temperatureC: number): number {
+  const t = Math.max(-30, Math.min(50, temperatureC));
+  if (t >= 15 && t <= 35) return 1;
+  if (t > 35) return 1 - (t - 35) * 0.012;
+
+  // Від 15 до -20 °C падіння приблизно лінійне, далі виходить на поличку.
+  const factor = 1 - (15 - t) * 0.026;
+  return Math.max(0.2, factor);
+}
+
+/**
  * Потужність, яку авто прийме при заданому SoC, кВт.
  * Лінійна інтерполяція між точками кривої, обмежена потужністю станції.
  */
-export function powerAtSoc(vehicle: Vehicle, socPct: number, stationPowerKw: number): number {
+export function powerAtSoc(
+  vehicle: Vehicle,
+  socPct: number,
+  stationPowerKw: number,
+  temperatureC = 20,
+): number {
   const curve = vehicle.chargeCurve;
   if (curve.length === 0) return Math.min(vehicle.maxDcPowerKw, stationPowerKw);
 
@@ -32,7 +58,9 @@ export function powerAtSoc(vehicle: Vehicle, socPct: number, stationPowerKw: num
     }
   }
 
-  return Math.max(0, Math.min(vehiclePowerKw, vehicle.maxDcPowerKw, stationPowerKw));
+  // Температура ріже саме те, що приймає авто; станція від холоду не слабшає.
+  const coldLimited = vehiclePowerKw * batteryTemperatureFactor(temperatureC);
+  return Math.max(0, Math.min(coldLimited, vehicle.maxDcPowerKw, stationPowerKw));
 }
 
 export interface ChargeResult {
@@ -55,6 +83,7 @@ export function chargeTime(
   toSocPct: number,
   stationPowerKw: number,
   maxDurationMin = Infinity,
+  temperatureC = 20,
 ): ChargeResult {
   const from = Math.max(0, Math.min(100, fromSocPct));
   const to = Math.max(0, Math.min(100, toSocPct));
@@ -70,7 +99,7 @@ export function chargeTime(
   while (soc < to) {
     const stepEnd = Math.min(to, soc + stepPct);
     const fraction = (stepEnd - soc) / stepPct;
-    const powerKw = powerAtSoc(vehicle, soc + (stepEnd - soc) / 2, stationPowerKw);
+    const powerKw = powerAtSoc(vehicle, soc + (stepEnd - soc) / 2, stationPowerKw, temperatureC);
     if (powerKw <= 0.1) break;
 
     const stepMin = ((energyPerStepKwh * fraction) / (powerKw * CHARGING_EFFICIENCY)) * 60;

@@ -19,6 +19,7 @@ function station(overrides: Partial<Station> = {}): Station {
     address: null,
     usageCost: null,
     accessType: null,
+    lastVerified: null,
     ...overrides,
   };
 }

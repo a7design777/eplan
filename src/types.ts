@@ -5,6 +5,12 @@ export interface Env {
   VALHALLA_URL: string;
   VALHALLA_CLIENT_ID: string;
   OCM_API_KEY?: string;
+  /**
+   * Код запрошення. Поки він заданий, зареєструватись можна лише з ним —
+   * так застосунок лишається приватним і не впирається у fair-use Valhalla.
+   * Прибрати секрет = відкрити вільну реєстрацію.
+   */
+  INVITE_CODE?: string;
 }
 
 export interface LatLon {
@@ -79,6 +85,8 @@ export interface Station {
   /** Ціна дослівно з OCM: «0,59 €/kWh», «Free», «see app». null — невідомо. */
   usageCost: string | null;
   accessType: AccessType | null;
+  /** Коли станцію востаннє підтверджували в OCM, unix-час. */
+  lastVerified: number | null;
 }
 
 /**
@@ -107,8 +115,10 @@ export interface PlanFilters {
   /** Максимальний об'їзд до зарядки від маршруту, км. */
   maxDetourKm: number;
   avoidTolls: boolean;
-  /** Зовнішня температура, °C — впливає на споживання. */
+  /** Зовнішня температура, °C — впливає і на споживання, і на швидкість зарядки. */
   temperatureC: number;
+  /** Брати реальну температуру з прогнозу замість заданої вручну. */
+  useLiveWeather: boolean;
 }
 
 export interface PlanRequest {
@@ -134,6 +144,10 @@ export interface ChargeStop {
   detourKm: number;
   /** Середня потужність за час зарядки, кВт. */
   averagePowerKw: number;
+  /** Вартість зупинки. null — ціна станції невідома. */
+  cost: { amount: number; currency: string } | null;
+  /** Попередження саме про цю станцію: мало портів, давно не підтверджували. */
+  cautions: string[];
 }
 
 export interface TollInfo {
@@ -156,6 +170,8 @@ export interface RoutePlan {
   /** Заряд на фініші, %. null — якщо маршрут непроїзний і фініш недосяжний. */
   arrivalSocPct: number | null;
   totalEnergyKwh: number;
+  /** Орієнтовна вартість зарядок. null — цін не знайшлось. */
+  cost: { total: number; currency: string; unknownStops: number } | null;
   tolls: TollInfo;
   /** true якщо маршрут неможливо проїхати з наявними зарядками. */
   unreachable: boolean;
@@ -168,4 +184,6 @@ export interface PlanResponse {
   tollFree: RoutePlan | null;
   /** Інші варіанти проїзду від рушія — інші дороги, не інші зарядки. */
   alternatives: RoutePlan[];
+  /** Температура, з якою реально рахували: або задана, або з прогнозу. */
+  temperatureC: number;
 }

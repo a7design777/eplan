@@ -116,6 +116,7 @@ export function parseFilters(v: unknown): PlanFilters {
     maxDetourKm: num(f.maxDetourKm ?? 5, 'filters.maxDetourKm', 0.5, 30),
     avoidTolls: f.avoidTolls === true,
     temperatureC: num(f.temperatureC ?? 15, 'filters.temperatureC', -40, 55),
+    useLiveWeather: f.useLiveWeather !== false,
   };
 }
 

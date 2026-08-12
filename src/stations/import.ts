@@ -36,8 +36,8 @@ export async function importStations(env: Env): Promise<{ updated: number; since
   const insert = env.DB.prepare(
     `INSERT OR REPLACE INTO stations
      (id, name, lat, lon, geohash5, max_power_kw, connectors, network_id, is_free,
-      port_count, country_code, address, usage_cost, access_type, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      port_count, country_code, address, usage_cost, access_type, last_verified, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   let updated = 0;
@@ -62,6 +62,7 @@ export async function importStations(env: Env): Promise<{ updated: number; since
         row.address,
         row.usageCost,
         row.accessType,
+        row.lastVerified,
         now,
       ),
     );
