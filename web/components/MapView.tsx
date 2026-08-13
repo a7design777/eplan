@@ -56,6 +56,8 @@ export function MapView({
 
   // Остання версія малювання — щоб її можна було викликати з ефекту зміни стилю.
   const renderRef = useRef<() => void>(() => {});
+  /** Який маршрут камера вже показала — щоб не смикати її на кожен перемальовок. */
+  const fittedKeyRef = useRef('');
 
   useEffect(() => {
     const container = containerRef.current;
@@ -128,8 +130,8 @@ export function MapView({
     // `load` не можна: якщо стиль дозавантажився до підписки (або взагалі не
     // догрузився), маршрут так і не з'явиться.
     const render = () => {
-      if (!ensureRouteLayers(map, styleRef.current.dark)) return;
-
+      // Джерело `route` описане в самому стилі, тож окремо створювати нічого.
+      // Поки стиль не застосувався, його ще немає — тоді просто чекаємо ретраю.
       const source = map.getSource('route') as maplibregl.GeoJSONSource | undefined;
       if (!source) return;
 
@@ -170,21 +172,59 @@ export function MapView({
         );
       });
 
-      if (coordinates.length > 1) {
-        const bounds = coordinates.reduce(
-          (b, c) => b.extend(c),
-          new maplibregl.LngLatBounds(coordinates[0], coordinates[0]),
-        );
-        map.fitBounds(bounds, { padding: 60, duration: 600 });
-      } else if (waypoints.length > 0) {
-        map.easeTo({ center: [waypoints[0]!.lon, waypoints[0]!.lat], zoom: 9 });
+      /*
+       * Камеру переставляємо тільки коли маршрут справді змінився, і без анімації.
+       *
+       * Анімований fitBounds крутиться через requestAnimationFrame, а той у фоновій
+       * чи пригальмованій вкладці не викликається — камера лишалась на старому місці,
+       * і користувач бачив порожню мапу замість щойно прокладеного маршруту.
+       * Заразом перевірка на зміну не дає перестрибувати назад, коли людина
+       * сама відсунула мапу, а render перезапустився через styledata.
+       */
+      const fitKey = coordinates.length
+        ? `${coordinates.length}:${coordinates[0]}:${coordinates[coordinates.length - 1]}`
+        : waypoints.map((w) => `${w.lat},${w.lon}`).join('|');
+
+      if (fitKey && fitKey !== fittedKeyRef.current) {
+        fittedKeyRef.current = fitKey;
+        if (coordinates.length > 1) {
+          const bounds = coordinates.reduce(
+            (b, c) => b.extend(c),
+            new maplibregl.LngLatBounds(coordinates[0], coordinates[0]),
+          );
+          map.fitBounds(bounds, { padding: 60, duration: 0 });
+        } else if (waypoints.length > 0) {
+          map.jumpTo({ center: [waypoints[0]!.lon, waypoints[0]!.lat], zoom: 9 });
+        }
       }
     };
 
     renderRef.current = render;
     render();
+
+    /*
+     * Поки стиль не застосувався, джерела `route` ще немає і малювати нема куди.
+     * Подія `styledata` як сигнал готовності ненадійна: у пригальмованій
+     * вкладці вона просто не приходить, і маршрут не з’являвся ніколи.
+     * Тому коротко переопитуємо, поки джерело не з’явиться.
+     */
+    let timer: ReturnType<typeof setInterval> | undefined;
+    if (!map.getSource('route')) {
+      let attempts = 0;
+      timer = setInterval(() => {
+        const m = mapRef.current;
+        if (!m || attempts++ > 50) {
+          clearInterval(timer);
+          return;
+        }
+        renderRef.current();
+        if (m.getSource('route')) clearInterval(timer);
+      }, 200);
+    }
+
     map.on('styledata', render);
     return () => {
+      if (timer) clearInterval(timer);
       map.off('styledata', render);
     };
   }, [plan, waypoints, style]);
@@ -281,44 +321,6 @@ export function MapView({
       </div>
     </>
   );
-}
-
-/**
- * Створює шар маршруту, якщо його ще немає. Повертає false, поки стиль не готовий
- * прийняти джерела — тоді малювання повториться на наступному `styledata`.
- */
-function ensureRouteLayers(map: MlMap, dark: boolean): boolean {
-  if (map.getLayer('route-line')) return true;
-  try {
-    if (!map.getSource('route')) {
-      map.addSource('route', { type: 'geojson', data: EMPTY_LINE });
-    }
-    // Дві лінії: широка тьмяна підкладка робить маршрут читабельним на будь-якій мапі.
-    if (!map.getLayer('route-casing')) {
-      map.addLayer({
-        id: 'route-casing',
-        type: 'line',
-        source: 'route',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        // На темній мапі темна підкладка зливається з фоном — там світліша.
-        paint: {
-          'line-color': dark ? '#e9fff3' : '#0b3d21',
-          'line-width': 8,
-          'line-opacity': dark ? 0.35 : 0.5,
-        },
-      });
-    }
-    map.addLayer({
-      id: 'route-line',
-      type: 'line',
-      source: 'route',
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': dark ? '#3ddc84' : '#22a35f', 'line-width': 4 },
-    });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function addMarker(
