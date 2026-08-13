@@ -56,6 +56,38 @@ export interface OcmPoi {
   Connections?: OcmConnection[] | null;
 }
 
+/**
+ * Прапорці оплати з довідника UsageTypes OCM.
+ * Саме вони відповідають на «карткою на місці, застосунком чи лише RFID».
+ */
+interface PaymentFlags {
+  payAtLocation: boolean;
+  membershipRequired: boolean;
+  accessKeyRequired: boolean;
+}
+
+const USAGE_PAYMENT_FLAGS: Record<number, PaymentFlags> = {
+  2: { payAtLocation: false, membershipRequired: true, accessKeyRequired: false },
+  4: { payAtLocation: false, membershipRequired: true, accessKeyRequired: true },
+  5: { payAtLocation: true, membershipRequired: false, accessKeyRequired: false },
+  6: { payAtLocation: false, membershipRequired: false, accessKeyRequired: false },
+  7: { payAtLocation: false, membershipRequired: false, accessKeyRequired: false },
+};
+
+/**
+ * StatusTypeID, за яких станція існує, але ще не працює.
+ *
+ * Зламані й демонтовані (100, 200, 210) відсіюються раніше й у базу не потрапляють
+ * узагалі, тож тут лишається тільки «запланована на майбутнє». Невідомий статус (0)
+ * свідомо вважаємо робочим: у OCM він стоїть у більшості записів, і позначати їх
+ * усі як несправні означало б лякати користувача на рівному місці.
+ *
+ * Статуси 10 і 20 — це автоматичні «вільна» / «зайнята зараз». Саму зайнятість
+ * не зберігаємо: дзеркало оновлюється раз на тиждень, і показувати тижневої
+ * давнини «вільно» гірше, ніж чесно мовчати.
+ */
+const NOT_YET_WORKING_STATUS_IDS = new Set([150]);
+
 /** UsageTypeID з OpenChargeMap → спосіб доступу й оплати. */
 const USAGE_TYPE_MAP: Record<number, AccessType> = {
   1: 'public',
@@ -83,6 +115,12 @@ export interface StationRow {
   usageCost: string | null;
   accessType: AccessType | null;
   lastVerified: number | null;
+  /** JSON зі списком портів: тип, потужність, кількість. */
+  connections: string;
+  statusOperational: number;
+  payAtLocation: number | null;
+  membershipRequired: number | null;
+  accessKeyRequired: number | null;
 }
 
 /** StatusTypeID, які означають «станція не працює» — такі не імпортуємо. */
@@ -111,6 +149,7 @@ export function toStationRow(
   if (poi.StatusTypeID != null && DEAD_STATUS_IDS.has(poi.StatusTypeID)) return null;
 
   const connectors = new Set<ConnectorType>();
+  const ports: { type: ConnectorType; powerKw: number; count: number }[] = [];
   let maxPowerKw = 0;
   let portCount = 0;
 
@@ -119,10 +158,18 @@ export function toStationRow(
     const type = c.ConnectionTypeID != null ? CONNECTION_TYPE_MAP[c.ConnectionTypeID] : undefined;
     if (!type) continue;
     const power = c.PowerKW ?? 0;
+    const count = c.Quantity ?? 1;
     if (power > maxPowerKw) maxPowerKw = power;
     connectors.add(type);
-    portCount += c.Quantity ?? 1;
+    portCount += count;
+
+    // Однакові порти зливаємо в один рядок, щоб у картці не було «CCS 150 кВт»
+    // повтореного шість разів.
+    const same = ports.find((p) => p.type === type && p.powerKw === power);
+    if (same) same.count += count;
+    else ports.push({ type, powerKw: power, count });
   }
+  ports.sort((a, b) => b.powerKw - a.powerKw);
 
   if (connectors.size === 0) return null;
   if (maxPowerKw < minPowerKw) return null;
@@ -130,6 +177,8 @@ export function toStationRow(
   const address = [poi.AddressInfo?.AddressLine1, poi.AddressInfo?.Town]
     .filter(Boolean)
     .join(', ');
+
+  const flags = poi.UsageTypeID != null ? USAGE_PAYMENT_FLAGS[poi.UsageTypeID] : undefined;
 
   return {
     id: poi.ID,
@@ -147,6 +196,12 @@ export function toStationRow(
     usageCost: poi.UsageCost?.trim() || null,
     accessType: poi.UsageTypeID != null ? (USAGE_TYPE_MAP[poi.UsageTypeID] ?? null) : null,
     lastVerified: parseOcmDate(poi.DateLastVerified ?? poi.DateLastStatusUpdate),
+    connections: JSON.stringify(ports),
+    statusOperational:
+      poi.StatusTypeID != null && NOT_YET_WORKING_STATUS_IDS.has(poi.StatusTypeID) ? 0 : 1,
+    payAtLocation: flags ? (flags.payAtLocation ? 1 : 0) : null,
+    membershipRequired: flags ? (flags.membershipRequired ? 1 : 0) : null,
+    accessKeyRequired: flags ? (flags.accessKeyRequired ? 1 : 0) : null,
   };
 }
 

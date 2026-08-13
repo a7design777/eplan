@@ -19,6 +19,11 @@ function station(overrides: Partial<Station> = {}): Station {
     usageCost: null,
     accessType: 'public',
     lastVerified: null,
+    ports: [{ type: 'ccs', powerKw: 150, count: 2 }],
+    statusOperational: true,
+    payAtLocation: null,
+    membershipRequired: null,
+    accessKeyRequired: null,
     ...overrides,
   };
 }

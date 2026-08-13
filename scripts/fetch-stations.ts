@@ -106,7 +106,8 @@ for (const country of EUROPE_COUNTRIES) {
     lines.push(
       'INSERT OR REPLACE INTO stations (id, name, lat, lon, geohash5, max_power_kw, connectors, ' +
         'network_id, is_free, port_count, country_code, address, usage_cost, access_type, ' +
-        'last_verified, updated_at) VALUES (' +
+        'last_verified, connections, status_operational, pay_at_location, ' +
+        'membership_required, access_key_required, updated_at) VALUES (' +
         [
           row.id,
           sqlString(row.name),
@@ -123,6 +124,11 @@ for (const country of EUROPE_COUNTRIES) {
           sqlString(row.usageCost),
           sqlString(row.accessType),
           row.lastVerified ?? 'NULL',
+          sqlString(row.connections),
+          row.statusOperational,
+          row.payAtLocation ?? 'NULL',
+          row.membershipRequired ?? 'NULL',
+          row.accessKeyRequired ?? 'NULL',
           now,
         ].join(', ') +
         ');',

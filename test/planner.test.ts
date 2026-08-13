@@ -67,6 +67,11 @@ function stationAt(id: number, km: number, powerKw = 150, lonOffset = 0): Statio
     usageCost: null,
     accessType: 'public',
     lastVerified: null,
+    ports: [{ type: 'ccs', powerKw, count: 4 }],
+    statusOperational: true,
+    payAtLocation: null,
+    membershipRequired: null,
+    accessKeyRequired: null,
   };
 }
 

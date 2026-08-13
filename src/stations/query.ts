@@ -1,4 +1,12 @@
-import type { AccessType, ConnectorType, Env, PlanFilters, RoutePoint, Station } from '../types';
+import type {
+  AccessType,
+  ConnectorType,
+  Env,
+  PlanFilters,
+  RoutePoint,
+  Station,
+  StationPort,
+} from '../types';
 import { corridorGeohashes } from '../lib/geo';
 
 /**
@@ -23,6 +31,25 @@ interface StationRowDb {
   usage_cost: string | null;
   access_type: string | null;
   last_verified: number | null;
+  connections: string | null;
+  status_operational: number | null;
+  pay_at_location: number | null;
+  membership_required: number | null;
+  access_key_required: number | null;
+}
+
+/** Прапорець з БД: 1/0 — відомо, NULL — даних немає. */
+const flag = (v: number | null): boolean | null => (v === null ? null : v === 1);
+
+function parsePorts(raw: string | null): StationPort[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as StationPort[]) : [];
+  } catch {
+    // Пошкоджений JSON не має ламати вибірку — просто лишаємось без деталей портів.
+    return [];
+  }
 }
 
 function toStation(r: StationRowDb): Station {
@@ -42,6 +69,11 @@ function toStation(r: StationRowDb): Station {
     usageCost: r.usage_cost,
     accessType: (r.access_type as AccessType | null) ?? null,
     lastVerified: r.last_verified,
+    ports: parsePorts(r.connections),
+    statusOperational: r.status_operational !== 0,
+    payAtLocation: flag(r.pay_at_location),
+    membershipRequired: flag(r.membership_required),
+    accessKeyRequired: flag(r.access_key_required),
   };
 }
 
@@ -73,7 +105,8 @@ export async function stationsInBbox(env: Env, q: BboxQuery): Promise<Station[]>
   const { results } = await env.DB.prepare(
     `SELECT s.id, s.name, s.lat, s.lon, s.max_power_kw, s.connectors, s.network_id,
             n.name AS network_name, s.is_free, s.port_count, s.country_code, s.address,
-            s.usage_cost, s.access_type, s.last_verified
+            s.usage_cost, s.access_type, s.last_verified, s.connections,
+            s.status_operational, s.pay_at_location, s.membership_required, s.access_key_required
      FROM stations s
      LEFT JOIN networks n ON n.id = s.network_id
      WHERE ${conditions.join(' AND ')}
@@ -138,7 +171,8 @@ export async function stationsAlongRoute(
     const sql =
       `SELECT s.id, s.name, s.lat, s.lon, s.max_power_kw, s.connectors, s.network_id,
               n.name AS network_name, s.is_free, s.port_count, s.country_code, s.address,
-              s.usage_cost, s.access_type, s.last_verified
+              s.usage_cost, s.access_type, s.last_verified, s.connections,
+            s.status_operational, s.pay_at_location, s.membership_required, s.access_key_required
        FROM stations s
        LEFT JOIN networks n ON n.id = s.network_id
        WHERE s.geohash5 IN (${chunk.map(() => '?').join(',')})

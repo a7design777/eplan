@@ -93,5 +93,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ name, request: req, plan }),
     }),
+  renameRoute: (id: string, name: string) =>
+    request<{ ok: true; name: string }>(`/routes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
+
   deleteRoute: (id: string) => request<{ ok: true }>(`/routes/${id}`, { method: 'DELETE' }),
 };

@@ -87,6 +87,24 @@ export interface Station {
   accessType: AccessType | null;
   /** Коли станцію востаннє підтверджували в OCM, unix-час. */
   lastVerified: number | null;
+  /** Порти станції, згруповані за типом і потужністю. */
+  ports: StationPort[];
+  /** false — станція не працює (зламана, планована, демонтована). */
+  statusOperational: boolean;
+  /**
+   * Як платити. null — OCM не має даних.
+   * Живої зайнятості («вільна зараз») OCM не дає взагалі, тому такого поля немає.
+   */
+  payAtLocation: boolean | null;
+  membershipRequired: boolean | null;
+  /** Потрібна фізична RFID-картка мережі. */
+  accessKeyRequired: boolean | null;
+}
+
+export interface StationPort {
+  type: ConnectorType;
+  powerKw: number;
+  count: number;
 }
 
 /**

@@ -24,7 +24,8 @@ interface Props {
   alternatives: NearbyStation[];
   /** Станції, які користувач призначив обов'язковими зупинками. */
   forcedStationIds: number[];
-  onToggleForced: (stationId: number) => void;
+  /** Клік по альтернативній станції — показати її картку. */
+  onSelectStation: (station: Station) => void;
   /** Чи ввімкнено режим постановки точок кліком. */
   pickMode: boolean;
   /** Клік по вільному місцю мапи — додати точку маршруту. */
@@ -40,7 +41,7 @@ export function MapView({
   onViewportChange,
   alternatives,
   forcedStationIds,
-  onToggleForced,
+  onSelectStation,
   pickMode,
   onPickPoint,
   onMovePoint,
@@ -54,8 +55,8 @@ export function MapView({
 
   // Колбеки міняються на кожен рендер, а слухач мапи вішається раз — тримаємо
   // їх у ref, щоб не перепідписуватись і не пересоздавати мапу.
-  const handlersRef = useRef({ onPickPoint, onMovePoint, onViewportChange, pickMode });
-  handlersRef.current = { onPickPoint, onMovePoint, onViewportChange, pickMode };
+  const handlersRef = useRef({ onPickPoint, onMovePoint, onViewportChange, pickMode, onSelectStation });
+  handlersRef.current = { onPickPoint, onMovePoint, onViewportChange, pickMode, onSelectStation };
 
   const browseMarkersRef = useRef<Marker[]>([]);
 
@@ -308,9 +309,11 @@ export function MapView({
       el.className = `alt-dot${forced ? ' forced' : ''}`;
       el.title = `${a.station.name} · ${Math.round(a.station.maxPowerKw)} кВт`;
       el.textContent = forced ? '★' : '';
+      // Клік відкриває картку станції, а не додає її одразу: перед вибором
+      // треба бачити порти, ціну і спосіб оплати.
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        onToggleForced(a.station.id);
+        handlersRef.current.onSelectStation(a.station);
       });
 
       const price = priceLabel(a.station);
@@ -323,7 +326,7 @@ export function MapView({
               (a.detourKm >= 0.3 ? ` · об'їзд ${a.detourKm} км` : '') +
               (a.station.networkName ? `<br/>${escapeHtml(a.station.networkName)}` : '') +
               (price ? `<br/><strong>${escapeHtml(price)}</strong>` : '') +
-              `<br/><em>${forced ? 'Натисніть, щоб прибрати зупинку' : 'Натисніть, щоб зробити зупинкою'}</em>`,
+              `<br/><em>${forced ? 'Уже в маршруті — натисніть для деталей' : 'Натисніть для деталей'}</em>`,
           ),
         )
         .addTo(map);
@@ -333,7 +336,7 @@ export function MapView({
       for (const m of altMarkersRef.current) m.remove();
       altMarkersRef.current = [];
     };
-  }, [alternatives, forcedStationIds, onToggleForced]);
+  }, [alternatives, forcedStationIds]);
 
   const appliedStyleRef = useRef(style.id);
   useEffect(() => {

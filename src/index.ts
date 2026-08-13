@@ -284,6 +284,22 @@ api.post('/routes', requireAuth, async (c) => {
   return c.json({ id, name });
 });
 
+api.patch('/routes/:id', requireAuth, async (c) => {
+  const body = (await c.req.json()) as { name?: unknown };
+  const name =
+    typeof body.name === 'string' && body.name.trim() ? body.name.trim().slice(0, 120) : null;
+  if (!name) throw new ValidationError('Вкажіть назву маршруту');
+
+  const res = await c.env.DB.prepare(
+    'UPDATE saved_routes SET name = ?, updated_at = ? WHERE id = ? AND user_id = ?',
+  )
+    .bind(name, Math.floor(Date.now() / 1000), c.req.param('id'), c.get('user').id)
+    .run();
+
+  if (res.meta.changes === 0) return c.json({ error: 'Маршрут не знайдено' }, 404);
+  return c.json({ ok: true, name });
+});
+
 api.delete('/routes/:id', requireAuth, async (c) => {
   const res = await c.env.DB.prepare('DELETE FROM saved_routes WHERE id = ? AND user_id = ?')
     .bind(c.req.param('id'), c.get('user').id)

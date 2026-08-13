@@ -7,6 +7,7 @@ import { Filters } from './components/Filters';
 import { VehiclePicker } from './components/VehiclePicker';
 import { AuthDialog } from './components/AuthDialog';
 import { StationLayer } from './components/StationLayer';
+import { StationDetails } from './components/StationDetails';
 import {
   loadLocalPrefs,
   loadMapNetworks,
@@ -61,6 +62,17 @@ export function App() {
   const [pickMode, setPickMode] = useState(false);
   /** Станції, які користувач сам призначив зупинками на мапі. */
   const [forcedStationIds, setForcedStationIds] = useState<number[]>([]);
+  const [selectedStation, setSelectedStation] = useState<Station | null>(null);
+
+  /**
+   * Додати або прибрати обов'язкову зупинку. Маршрут перебудовується не одразу:
+   * користувач може обрати кілька станцій, а тоді натиснути «Прокласти».
+   */
+  const toggleForcedStation = useCallback((id: number) => {
+    setForcedStationIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [showStations, setShowStations] = useState(false);
   // Мережі для шару на мапі — окремо від улюблених у фільтрах.
@@ -540,6 +552,22 @@ export function App() {
                   </button>
                   <button
                     className="btn-plain"
+                    title="Перейменувати"
+                    onClick={async () => {
+                      const name = window.prompt('Нова назва маршруту', r.name);
+                      if (!name || name.trim() === r.name) return;
+                      try {
+                        await api.renameRoute(r.id, name);
+                        refreshSaved();
+                      } catch (e) {
+                        setError((e as Error).message);
+                      }
+                    }}
+                  >
+                    ✎
+                  </button>
+                  <button
+                    className="btn-plain"
                     title="Видалити"
                     onClick={async () => {
                       if (!window.confirm(`Видалити «${r.name}»?`)) return;
@@ -564,15 +592,20 @@ export function App() {
           onViewportChange={setBbox}
           alternatives={showAlternatives ? shownPlan?.nearbyStations ?? [] : []}
           forcedStationIds={forcedStationIds}
-          onToggleForced={(id) =>
-            setForcedStationIds((prev) =>
-              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-            )
-          }
+          onSelectStation={setSelectedStation}
           pickMode={pickMode}
           onPickPoint={pickPoint}
           onMovePoint={movePoint}
         />
+
+        {selectedStation && (
+          <StationDetails
+            station={selectedStation}
+            forced={forcedStationIds.includes(selectedStation.id)}
+            onToggleForced={toggleForcedStation}
+            onClose={() => setSelectedStation(null)}
+          />
+        )}
 
         {pickMode && (
           <div className="map-hint">Торкніться мапи, щоб поставити точку маршруту</div>
