@@ -75,7 +75,7 @@ export function MapView({
     try {
       map = new maplibregl.Map({
         container,
-        style: styleRef.current.style,
+        style: styleRef.current.makeStyle(),
         center: [14, 50],
         zoom: 4,
         attributionControl: { compact: true },
@@ -221,12 +221,27 @@ export function MapView({
       let attempts = 0;
       timer = setInterval(() => {
         const m = mapRef.current;
-        if (!m || attempts++ > 50) {
+        if (!m) {
           clearInterval(timer);
           return;
         }
+        if (attempts++ > 50) {
+          clearInterval(timer);
+          // Мовчазний порожній прямокутник — найгірше, що можна показати.
+          // Якщо за 10 секунд стиль так і не піднявся, кажемо про це прямо.
+          if (!m.getSource('route')) {
+            setMapError(
+              'Мапа не змогла завантажити стиль — маршрут порахований, але намалювати його ніде. ' +
+                'Перевірте, чи не блокує розширення браузера запити до server.arcgisonline.com.',
+            );
+          }
+          return;
+        }
         renderRef.current();
-        if (m.getSource('route')) clearInterval(timer);
+        if (m.getSource('route')) {
+          clearInterval(timer);
+          setMapError(null);
+        }
       }, 200);
     }
 
@@ -326,7 +341,7 @@ export function MapView({
     // Мапа вже створена з початковим стилем — перевстановлювати його не треба.
     if (!map || appliedStyleRef.current === style.id) return;
     appliedStyleRef.current = style.id;
-    map.setStyle(style.style);
+    map.setStyle(style.makeStyle());
     saveMapStyle(style.id);
 
     // Підміна стилю асинхронна і стирає всі наші шари. Подія `styledata` після неї

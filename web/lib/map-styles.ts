@@ -12,8 +12,13 @@ import type { StyleSpecification } from 'maplibre-gl';
 export interface MapStyle {
   id: string;
   label: string;
-  /** URL стилю або готова специфікація для растрових шарів. */
-  style: string | StyleSpecification;
+  /**
+   * Фабрика, а не готовий об'єкт: maplibre нормалізує передану специфікацію
+   * під себе і тримає на неї посилання. Спільний об'єкт, відданий і при
+   * створенні мапи, і потім у setStyle, після першого ж використання вже не
+   * той, яким його описали.
+   */
+  makeStyle: () => StyleSpecification;
   /** Темний фон — під нього підбирається колір лінії маршруту. */
   dark: boolean;
 }
@@ -103,31 +108,30 @@ export const MAP_STYLES: MapStyle[] = [
   {
     id: 'terrain',
     label: 'Рельєф',
-    style: rasterStyle(
-      `${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`,
-      'Esri, USGS, NOAA',
-      false,
-    ),
+    makeStyle: () =>
+      rasterStyle(`${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`, 'Esri, USGS, NOAA', false),
     dark: false,
   },
   {
     id: 'satellite',
     label: 'Супутник',
-    style: rasterStyle(
-      `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
-      'Esri, Maxar, Earthstar Geographics',
-      true,
-    ),
+    makeStyle: () =>
+      rasterStyle(
+        `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+        'Esri, Maxar, Earthstar Geographics',
+        true,
+      ),
     dark: true,
   },
   {
     id: 'hybrid',
     label: 'Гібрид',
-    style: hybridStyle(
-      `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
-      `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
-      'Esri, Maxar, Earthstar Geographics',
-    ),
+    makeStyle: () =>
+      hybridStyle(
+        `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+        `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
+        'Esri, Maxar, Earthstar Geographics',
+      ),
     dark: true,
   },
 ];
