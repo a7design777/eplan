@@ -262,8 +262,16 @@ export function MapView({
     for (const m of browseMarkersRef.current) m.remove();
     browseMarkersRef.current = browseStations.map((s) => {
       const el = document.createElement('div');
-      el.className = 'station-dot';
+      // Безкоштовні виділяємо кольором — їх шукають окремо від решти.
+      el.className = `station-dot${s.isFree ? ' free' : ''}`;
       el.title = s.name;
+      // Клік веде в ту саму картку, що й для альтернатив: звідти станцію
+      // можна додати в маршрут, навіть якщо це просто перегляд мережі.
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handlersRef.current.onSelectStation(s);
+      });
+
       const price = priceLabel(s);
       return new maplibregl.Marker({ element: el })
         .setLngLat([s.lon, s.lat])
@@ -273,7 +281,8 @@ export function MapView({
               `${Math.round(s.maxPowerKw)} кВт · ${s.portCount} портів` +
               (s.networkName ? `<br/>${escapeHtml(s.networkName)}` : '') +
               `<br/>${escapeHtml(paymentHint(s))}` +
-              (price ? `<br/><strong>${escapeHtml(price)}</strong>` : ''),
+              (price ? `<br/><strong>${escapeHtml(price)}</strong>` : '') +
+              '<br/><em>Натисніть для деталей</em>',
           ),
         )
         .addTo(map);

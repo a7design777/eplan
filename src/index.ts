@@ -131,6 +131,7 @@ api.get('/stations', async (c) => {
     maxLon,
     networkIds,
     minPowerKw: Number.isFinite(Number(q.minPowerKw)) ? Number(q.minPowerKw) : 50,
+    freeOnly: q.freeOnly === '1',
     limit: 400,
   });
   return c.json(stations);

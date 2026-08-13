@@ -60,10 +60,11 @@ export const api = {
 
   reverse: (lat: number, lon: number) => request<Waypoint>(`/reverse?lat=${lat}&lon=${lon}`),
 
-  stations: (b: Bbox, networkIds: number[], minPowerKw: number) =>
+  stations: (b: Bbox, networkIds: number[], minPowerKw: number, freeOnly = false) =>
     request<Station[]>(
       `/stations?minLat=${b.minLat}&maxLat=${b.maxLat}&minLon=${b.minLon}&maxLon=${b.maxLon}` +
-        `&networks=${networkIds.join(',')}&minPowerKw=${minPowerKw}`,
+        `&networks=${networkIds.join(',')}&minPowerKw=${minPowerKw}` +
+        (freeOnly ? '&freeOnly=1' : ''),
     ),
 
   plan: (body: PlanRequest) =>

@@ -1048,6 +1048,13 @@ details.filters > div {
   cursor: pointer;
 }
 
+/* Безкоштовні — зеленим, щоб їх було видно без відкривання картки. */
+.station-dot.free {
+  background: var(--accent);
+  width: 13px;
+  height: 13px;
+}
+
 .network-row {
   display: flex;
   align-items: center;

@@ -77,6 +77,7 @@ export function App() {
   const [showStations, setShowStations] = useState(false);
   // Мережі для шару на мапі — окремо від улюблених у фільтрах.
   const [mapNetworkIds, setMapNetworkIds] = useState<number[]>(loadMapNetworks);
+  const [mapFreeOnly, setMapFreeOnly] = useState(false);
   const [browseStations, setBrowseStations] = useState<Station[]>([]);
   const [bbox, setBbox] = useState<Bbox | null>(null);
   const [planning, setPlanning] = useState(false);
@@ -188,7 +189,7 @@ export function App() {
     let cancelled = false;
     const timer = setTimeout(() => {
       api
-        .stations(bbox, mapNetworkIds, filters.minPowerKw)
+        .stations(bbox, mapNetworkIds, mapFreeOnly ? 2 : filters.minPowerKw, mapFreeOnly)
         .then((s) => !cancelled && setBrowseStations(s))
         .catch(() => !cancelled && setBrowseStations([]));
     }, 300);
@@ -197,7 +198,7 @@ export function App() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [showStations, bbox, mapNetworkIds, filters.minPowerKw]);
+  }, [showStations, bbox, mapNetworkIds, mapFreeOnly, filters.minPowerKw]);
 
   useEffect(() => saveMapNetworks(mapNetworkIds), [mapNetworkIds]);
 
@@ -654,7 +655,9 @@ export function App() {
             networks={networks}
             selected={mapNetworkIds}
             count={browseStations.length}
+            freeOnly={mapFreeOnly}
             onChange={setMapNetworkIds}
+            onFreeOnlyChange={setMapFreeOnly}
             onClose={() => setShowStations(false)}
           />
         )}

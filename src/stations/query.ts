@@ -84,6 +84,7 @@ export interface BboxQuery {
   maxLon: number;
   networkIds: number[];
   minPowerKw: number;
+  freeOnly: boolean;
   limit: number;
 }
 
@@ -101,6 +102,8 @@ export async function stationsInBbox(env: Env, q: BboxQuery): Promise<Station[]>
   if (q.networkIds.length > 0) {
     conditions.push(`s.network_id IN (${q.networkIds.map((id) => Math.trunc(id)).join(',')})`);
   }
+
+  if (q.freeOnly) conditions.push('s.is_free = 1');
 
   const { results } = await env.DB.prepare(
     `SELECT s.id, s.name, s.lat, s.lon, s.max_power_kw, s.connectors, s.network_id,
@@ -130,10 +133,11 @@ export async function stationsAlongRoute(
   points: RoutePoint[],
   filters: PlanFilters,
   vehicleConnectors: ConnectorType[],
+  corridorKm = filters.maxDetourKm,
 ): Promise<Station[]> {
   if (points.length === 0) return [];
 
-  const cells = corridorGeohashes(points, filters.maxDetourKm, 5);
+  const cells = corridorGeohashes(points, corridorKm, 5);
   const wantedConnectors =
     filters.connectors.length > 0
       ? filters.connectors.filter((c) => vehicleConnectors.includes(c))

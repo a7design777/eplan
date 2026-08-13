@@ -57,7 +57,22 @@ function isStale(station: Station, nowSec: number): boolean {
 /** Крок профілю висот у запиті до рушія, м. */
 const ELEVATION_INTERVAL_M = 100;
 /** Скільки варіантів заміни віддавати на мапу. */
-const MAX_NEARBY_STATIONS = 80;
+/**
+ * Скільки альтернативних зарядок віддавати на мапу.
+ *
+ * Триста — це вже «усе, що є» для більшості маршрутів: у коридорі 5 км навіть
+ * на Мадрид — Барселона стільки не набирається. Ліміт лишається запобіжником,
+ * щоб на трансєвропейському маршруті в браузер не поїхали тисячі точок.
+ */
+const MAX_NEARBY_STATIONS = 300;
+
+/**
+ * Коридор для списку альтернатив, км.
+ *
+ * Не залежить від `maxDetourKm`: той обмежує, куди планувальник сам заведе
+ * машину, а тут користувач лише дивиться, що є поблизу, і вирішує сам.
+ */
+const NEARBY_CORRIDOR_KM = 5;
 
 interface StrategyParams {
   /** До якого SoC заряджаємось, коли попереду ще одна зупинка. */
@@ -440,7 +455,15 @@ export async function planForRoute(
     temperatureC: filters.temperatureC,
   });
 
-  const stations = await stationsAlongRoute(env, points, filters, vehicle.connectors);
+  // Тягнемо з бази ширший коридор, ніж потрібно планувальнику: та сама вибірка
+  // живить і список альтернатив, який показуємо на мапі.
+  const stations = await stationsAlongRoute(
+    env,
+    points,
+    filters,
+    vehicle.connectors,
+    Math.max(filters.maxDetourKm, NEARBY_CORRIDOR_KM),
+  );
   const candidates = projectStations(stations, points, filters.maxDetourKm);
 
   const selection = selectStops(candidates, points, cumulative, req);
@@ -452,7 +475,12 @@ export async function planForRoute(
    * Обрані зупинки звідси прибираємо — вони вже показані як зупинки.
    */
   const chosenIds = new Set(trimmed.stops.map((s) => s.station.id));
-  const nearbyStations = candidates
+  // Окрема проєкція: для показу беремо ширший коридор, ніж для автоматичного вибору.
+  const nearbyStations = projectStations(
+    stations,
+    points,
+    Math.max(filters.maxDetourKm, NEARBY_CORRIDOR_KM),
+  )
     .filter((c) => !chosenIds.has(c.station.id))
     .sort((a, b) => b.station.maxPowerKw - a.station.maxPowerKw || a.detourKm - b.detourKm)
     .slice(0, MAX_NEARBY_STATIONS)

@@ -5,7 +5,9 @@ interface Props {
   networks: NetworkInfo[];
   selected: number[];
   count: number;
+  freeOnly: boolean;
   onChange: (ids: number[]) => void;
+  onFreeOnlyChange: (v: boolean) => void;
   onClose: () => void;
 }
 
@@ -16,7 +18,15 @@ interface Props {
  * зарядки Electra, і вимагати від планувальника віддавати їм перевагу — різні
  * наміри, і змішувати їх в одному перемикачі виявилось незручно.
  */
-export function StationLayer({ networks, selected, count, onChange, onClose }: Props) {
+export function StationLayer({
+  networks,
+  selected,
+  count,
+  freeOnly,
+  onChange,
+  onFreeOnlyChange,
+  onClose,
+}: Props) {
   const [query, setQuery] = useState('');
   // На телефоні панель займає майже всю мапу — тому її можна згорнути
   // в один рядок, не вимикаючи сам шар станцій.
@@ -66,6 +76,15 @@ export function StationLayer({ networks, selected, count, onChange, onClose }: P
         aria-label="Пошук мережі"
         onChange={(e) => setQuery(e.target.value)}
       />
+
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={freeOnly}
+          onChange={(e) => onFreeOnlyChange(e.target.checked)}
+        />
+        Тільки безкоштовні
+      </label>
 
       <div className="station-layer-meta">
         {selected.length === 0 ? 'Показано всі мережі' : `Обрано мереж: ${selected.length}`}
