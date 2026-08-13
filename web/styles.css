@@ -911,6 +911,32 @@ details.filters > div {
   background: var(--accent);
 }
 
+/* Альтернативні зарядки вздовж маршруту: клікабельні, обрані позначені зіркою. */
+.alt-dot {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #f0b429;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  font-size: 9px;
+  color: #fff;
+}
+
+.alt-dot:hover {
+  transform: scale(1.25);
+}
+
+.alt-dot.forced {
+  width: 24px;
+  height: 24px;
+  background: #b45309;
+  font-size: 13px;
+}
+
 /* Точки шару «показати мережі» — дрібні, щоб не перекривали маршрут. */
 .station-dot {
   width: 11px;

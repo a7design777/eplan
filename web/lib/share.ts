@@ -35,6 +35,7 @@ export function encodeRouteLink(req: PlanRequest): string {
     s: req.startSocPct,
     t: req.targetSocPct,
     f: req.filters,
+    x: req.forcedStationIds,
   };
   const url = new URL(window.location.href);
   url.hash = '';
@@ -54,6 +55,7 @@ export function decodeRouteLink(): PlanRequest | null {
       s: number;
       t: number;
       f: PlanRequest['filters'];
+      x?: number[];
     };
     if (!Array.isArray(p.w) || p.w.length < 2 || !p.v) return null;
 
@@ -63,6 +65,7 @@ export function decodeRouteLink(): PlanRequest | null {
       startSocPct: p.s,
       targetSocPct: p.t,
       filters: p.f,
+      forcedStationIds: Array.isArray(p.x) ? p.x : [],
     };
   } catch {
     // Обрізане чи підправлене посилання — просто відкриваємо порожній планувальник.

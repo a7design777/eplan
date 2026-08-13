@@ -132,12 +132,16 @@ export function parsePlanRequest(body: unknown): PlanRequest {
   const startSocPct = num(body.startSocPct ?? 90, 'startSocPct', 1, 100);
   const targetSocPct = num(body.targetSocPct ?? 10, 'targetSocPct', 0, 100);
 
+  const forcedRaw = Array.isArray(body.forcedStationIds) ? body.forcedStationIds : [];
+  if (forcedRaw.length > 20) throw new ValidationError('Забагато обраних вручну зупинок');
+
   return {
     waypoints: wpRaw.map(parseWaypoint),
     vehicle: parseVehicle(body.vehicle),
     startSocPct,
     targetSocPct,
     filters: parseFilters(body.filters),
+    forcedStationIds: forcedRaw.map((id, i) => num(id, `forcedStationIds[${i}]`, 1, 1e12)),
   };
 }
 

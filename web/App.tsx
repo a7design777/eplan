@@ -59,6 +59,9 @@ export function App() {
   const [variant, setVariant] = useState<string>('primary');
 
   const [pickMode, setPickMode] = useState(false);
+  /** Станції, які користувач сам призначив зупинками на мапі. */
+  const [forcedStationIds, setForcedStationIds] = useState<number[]>([]);
+  const [showAlternatives, setShowAlternatives] = useState(false);
   const [showStations, setShowStations] = useState(false);
   // Мережі для шару на мапі — окремо від улюблених у фільтрах.
   const [mapNetworkIds, setMapNetworkIds] = useState<number[]>(loadMapNetworks);
@@ -82,6 +85,7 @@ export function App() {
     setStartSocPct(shared.startSocPct);
     setTargetSocPct(shared.targetSocPct);
     setFilters({ ...DEFAULT_FILTERS, ...shared.filters });
+    setForcedStationIds(shared.forcedStationIds ?? []);
     clearRouteLink();
   }, [shared]);
 
@@ -276,7 +280,7 @@ export function App() {
 
   const buildRequest = (): PlanRequest | null => {
     if (!vehicle || waypoints.length < 2) return null;
-    return { waypoints, vehicle, startSocPct, targetSocPct, filters };
+    return { waypoints, vehicle, startSocPct, targetSocPct, filters, forcedStationIds };
   };
 
   const runPlan = async () => {
@@ -558,6 +562,13 @@ export function App() {
           waypoints={waypoints}
           browseStations={browseStations}
           onViewportChange={setBbox}
+          alternatives={showAlternatives ? shownPlan?.nearbyStations ?? [] : []}
+          forcedStationIds={forcedStationIds}
+          onToggleForced={(id) =>
+            setForcedStationIds((prev) =>
+              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+            )
+          }
           pickMode={pickMode}
           onPickPoint={pickPoint}
           onMovePoint={movePoint}
@@ -582,6 +593,27 @@ export function App() {
             {showStations ? '✓ Станції' : '○ Станції'}
             {showStations && mapNetworkIds.length > 0 && ` · ${mapNetworkIds.length} мереж`}
           </button>
+
+          {shownPlan && (
+            <button
+              className={`map-toggle${showAlternatives ? ' on' : ''}`}
+              onClick={() => setShowAlternatives((v) => !v)}
+              title="Інші зарядки вздовж маршруту — можна зробити зупинкою"
+            >
+              {showAlternatives ? '✓ Альтернативи' : '○ Альтернативи'}
+              {showAlternatives && ` · ${shownPlan.nearbyStations.length}`}
+            </button>
+          )}
+
+          {forcedStationIds.length > 0 && (
+            <button
+              className="map-toggle on"
+              onClick={() => setForcedStationIds([])}
+              title="Прибрати всі зупинки, обрані вручну"
+            >
+              ★ Мої зупинки · {forcedStationIds.length} ✕
+            </button>
+          )}
         </div>
 
         {showStations && (

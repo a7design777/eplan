@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import type { Map as MlMap, Marker } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { RoutePlan, Station, Waypoint } from '../../src/types';
+import type { NearbyStation, RoutePlan, Station, Waypoint } from '../../src/types';
 import type { Bbox } from '../api';
 import { loadMapStyle, MAP_STYLES, saveMapStyle, type MapStyle } from '../lib/map-styles';
 import { paymentHint, priceLabel } from '../lib/payment';
@@ -20,6 +20,11 @@ interface Props {
   browseStations: Station[];
   /** Мапу зрушили — треба перезапитати станції під нові межі. */
   onViewportChange: (b: Bbox) => void;
+  /** Інші зарядки вздовж маршруту — варіанти заміни. */
+  alternatives: NearbyStation[];
+  /** Станції, які користувач призначив обов'язковими зупинками. */
+  forcedStationIds: number[];
+  onToggleForced: (stationId: number) => void;
   /** Чи ввімкнено режим постановки точок кліком. */
   pickMode: boolean;
   /** Клік по вільному місцю мапи — додати точку маршруту. */
@@ -33,6 +38,9 @@ export function MapView({
   waypoints,
   browseStations,
   onViewportChange,
+  alternatives,
+  forcedStationIds,
+  onToggleForced,
   pickMode,
   onPickPoint,
   onMovePoint,
@@ -267,6 +275,50 @@ export function MapView({
     if (!map) return;
     map.getCanvas().style.cursor = pickMode ? 'crosshair' : '';
   }, [pickMode]);
+
+  /*
+   * Альтернативні зарядки. Клік по маркеру робить станцію обов'язковою зупинкою
+   * (або знімає позначку) — далі App перепрокладе маршрут. Окремий шар від
+   * «показати мережі»: тут лише те, що справді лежить уздовж цього маршруту.
+   */
+  const altMarkersRef = useRef<Marker[]>([]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    for (const m of altMarkersRef.current) m.remove();
+    altMarkersRef.current = alternatives.map((a) => {
+      const forced = forcedStationIds.includes(a.station.id);
+      const el = document.createElement('div');
+      el.className = `alt-dot${forced ? ' forced' : ''}`;
+      el.title = `${a.station.name} · ${Math.round(a.station.maxPowerKw)} кВт`;
+      el.textContent = forced ? '★' : '';
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onToggleForced(a.station.id);
+      });
+
+      const price = priceLabel(a.station);
+      return new maplibregl.Marker({ element: el })
+        .setLngLat([a.station.lon, a.station.lat])
+        .setPopup(
+          new maplibregl.Popup({ offset: 12, closeButton: false }).setHTML(
+            `<strong>${escapeHtml(a.station.name)}</strong><br/>` +
+              `${Math.round(a.station.maxPowerKw)} кВт · ${Math.round(a.distanceKm)} км від старту` +
+              (a.detourKm >= 0.3 ? ` · об'їзд ${a.detourKm} км` : '') +
+              (a.station.networkName ? `<br/>${escapeHtml(a.station.networkName)}` : '') +
+              (price ? `<br/><strong>${escapeHtml(price)}</strong>` : '') +
+              `<br/><em>${forced ? 'Натисніть, щоб прибрати зупинку' : 'Натисніть, щоб зробити зупинкою'}</em>`,
+          ),
+        )
+        .addTo(map);
+    });
+
+    return () => {
+      for (const m of altMarkersRef.current) m.remove();
+      altMarkersRef.current = [];
+    };
+  }, [alternatives, forcedStationIds, onToggleForced]);
 
   const appliedStyleRef = useRef(style.id);
   useEffect(() => {

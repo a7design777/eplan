@@ -56,6 +56,8 @@ function isStale(station: Station, nowSec: number): boolean {
 }
 /** Крок профілю висот у запиті до рушія, м. */
 const ELEVATION_INTERVAL_M = 100;
+/** Скільки варіантів заміни віддавати на мапу. */
+const MAX_NEARBY_STATIONS = 80;
 
 interface StrategyParams {
   /** До якого SoC заряджаємось, коли попереду ще одна зупинка. */
@@ -196,15 +198,32 @@ export function selectStops(
   let socPct = req.startSocPct;
   let atKm = 0;
 
+  /*
+   * Обов'язкові зупинки, обрані користувачем на мапі. Ідемо до найближчої з них
+   * як до проміжної цілі: якщо заряду не вистачає — доберемо автоматичну зупинку
+   * перед нею, але саму її не пропускаємо й не замінюємо «зручнішою».
+   */
+  const forced = candidates
+    .filter((c) => req.forcedStationIds.includes(c.station.id))
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+  let forcedIndex = 0;
+
   for (let guard = 0; guard < 40; guard++) {
     const energyAtStart = energyAtDistanceKwh(points, cumulative, atKm);
     const usableKwh = ((socPct - filters.reserveSocPct) / 100) * vehicle.batteryKwh;
 
-    // Чи дістанемось фінішу з потрібним залишком?
-    const toFinishKwh = energyAtDistanceKwh(points, cumulative, totalKm) - energyAtStart;
-    const finishSocPct = socPct - (toFinishKwh / vehicle.batteryKwh) * 100;
-    if (finishSocPct >= req.targetSocPct) {
-      return { stops, unreachable: false, warnings };
+    // Наступна обов'язкова зупинка попереду — вона головніша за «доїхати далі».
+    while (forcedIndex < forced.length && forced[forcedIndex]!.distanceKm <= atKm) forcedIndex++;
+    const nextForced = forced[forcedIndex];
+
+    // Чи дістанемось фінішу з потрібним залишком? (Якщо попереду немає
+    // обов'язкових зупинок — інакше спершу треба заїхати на них.)
+    if (!nextForced) {
+      const toFinishKwh = energyAtDistanceKwh(points, cumulative, totalKm) - energyAtStart;
+      const finishSocPct = socPct - (toFinishKwh / vehicle.batteryKwh) * 100;
+      if (finishSocPct >= req.targetSocPct) {
+        return { stops, unreachable: false, warnings };
+      }
     }
 
     if (usableKwh <= 0) {
@@ -215,6 +234,26 @@ export function selectStops(
     // Найдальша точка, куди дотягнемось на поточному заряді.
     const reachEnergyKwh = energyAtStart + usableKwh;
     const maxReachKm = distanceForEnergy(points, cumulative, reachEnergyKwh, totalKm);
+
+    // Обов'язкова зупинка в межах досяжності — їдемо саме на неї, без вибору.
+    if (nextForced) {
+      const needKwh =
+        energyAtDistanceKwh(points, cumulative, nextForced.distanceKm) -
+        energyAtStart +
+        detourEnergyKwh(vehicle, nextForced.detourKm);
+
+      if (needKwh <= usableKwh) {
+        stops.push({
+          candidate: nextForced,
+          arrivalSocPct: socPct - (needKwh / vehicle.batteryKwh) * 100,
+        });
+        socPct = params.chargeCeilingPct;
+        atKm = nextForced.distanceKm;
+        forcedIndex++;
+        continue;
+      }
+      // Не дотягуємо — нижче добереться проміжна зупинка перед нею.
+    }
 
     const windowStartKm = atKm + params.minLegKm;
     const inWindow = candidates.filter(
@@ -407,6 +446,19 @@ export async function planForRoute(
   const selection = selectStops(candidates, points, cumulative, req);
   const trimmed = trimStops(selection.stops, points, cumulative, req);
 
+  /*
+   * Варіанти заміни для мапи. Беремо найпотужніші з тих, що близько до дороги:
+   * у коридорі бувають тисячі точок, і слати їх усі в браузер немає сенсу.
+   * Обрані зупинки звідси прибираємо — вони вже показані як зупинки.
+   */
+  const chosenIds = new Set(trimmed.stops.map((s) => s.station.id));
+  const nearbyStations = candidates
+    .filter((c) => !chosenIds.has(c.station.id))
+    .sort((a, b) => b.station.maxPowerKw - a.station.maxPowerKw || a.detourKm - b.detourKm)
+    .slice(0, MAX_NEARBY_STATIONS)
+    .map((c) => ({ station: c.station, distanceKm: round1(c.distanceKm), detourKm: round1(c.detourKm) }))
+    .sort((a, b) => a.distanceKm - b.distanceKm);
+
   const chargingDurationMin = trimmed.stops.reduce((s, x) => s + x.totalStopMin, 0);
   const detourKm = trimmed.stops.reduce((s, x) => s + x.detourKm * 2, 0);
   const warnings = [...selection.warnings, ...trimmed.warnings];
@@ -435,6 +487,7 @@ export async function planForRoute(
     },
     unreachable: selection.unreachable,
     warnings,
+    nearbyStations,
   };
 }
 

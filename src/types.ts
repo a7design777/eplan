@@ -127,6 +127,11 @@ export interface PlanRequest {
   startSocPct: number;
   targetSocPct: number;
   filters: PlanFilters;
+  /**
+   * Станції, які користувач сам обрав на мапі. Планувальник зобов'язаний
+   * зупинитись саме на них, а проміжки за потреби добере автоматично.
+   */
+  forcedStationIds: number[];
 }
 
 export interface ChargeStop {
@@ -176,6 +181,18 @@ export interface RoutePlan {
   /** true якщо маршрут неможливо проїхати з наявними зарядками. */
   unreachable: boolean;
   warnings: string[];
+  /**
+   * Інші станції в коридорі маршруту — щоб показати їх на мапі як варіанти
+   * заміни. Обмежені кількістю: уся вибірка може бути в тисячі точок.
+   */
+  nearbyStations: NearbyStation[];
+}
+
+export interface NearbyStation {
+  station: Station;
+  /** Позиція вздовж маршруту, км від старту. */
+  distanceKm: number;
+  detourKm: number;
 }
 
 export interface PlanResponse {

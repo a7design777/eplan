@@ -80,6 +80,7 @@ function request(overrides: Partial<PlanRequest> = {}): PlanRequest {
     startSocPct: 90,
     targetSocPct: 10,
     filters,
+    forcedStationIds: [],
     ...overrides,
   };
 }
@@ -261,6 +262,58 @@ describe('швидкість зарядки важливіша за близьк
 
     const r = selectStops(candidates, points, cum, request());
     expect(r.stops[0]?.candidate.station.name).toBe('Ближча 150');
+  });
+});
+
+describe('обов’язкові зупинки, обрані вручну', () => {
+  const points = straightRoute(600);
+  const cum = cumulativeEnergyKwh(points, vehicle, { temperatureC: 20 });
+  const candidates = projectStations(
+    Array.from({ length: 11 }, (_, i) => stationAt(i + 1, (i + 1) * 50)),
+    points,
+    5,
+  );
+
+  it('зупиняється саме там, де просив користувач', () => {
+    const r = selectStops(candidates, points, cum, request({ forcedStationIds: [2] }));
+    expect(r.stops.map((s) => s.candidate.station.id)).toContain(2);
+  });
+
+  it('не пропускає обов’язкову, навіть якщо міг би доїхати далі', () => {
+    // Станція 1 на 50 км — далеко ближче, ніж дотягнувся б автопланувальник.
+    const r = selectStops(candidates, points, cum, request({ forcedStationIds: [1] }));
+    expect(r.stops[0]?.candidate.station.id).toBe(1);
+  });
+
+  it('добирає проміжну зупинку, якщо до обов’язкової не дотягнути', () => {
+    // Станція 9 на 450 км — на одному заряді туди не доїхати.
+    const r = selectStops(candidates, points, cum, request({ forcedStationIds: [9] }));
+    const ids = r.stops.map((s) => s.candidate.station.id);
+    expect(ids).toContain(9);
+    expect(ids.length).toBeGreaterThan(1);
+    expect(ids.indexOf(9)).toBe(ids.length - 1);
+    expect(r.unreachable).toBe(false);
+  });
+
+  it('тримає порядок кількох обов’язкових зупинок', () => {
+    const r = selectStops(candidates, points, cum, request({ forcedStationIds: [7, 3] }));
+    const ids = r.stops.map((s) => s.candidate.station.id);
+    expect(ids.indexOf(3)).toBeGreaterThanOrEqual(0);
+    expect(ids.indexOf(7)).toBeGreaterThan(ids.indexOf(3));
+  });
+
+  it('порожній список нічого не змінює', () => {
+    const a = selectStops(candidates, points, cum, request({ forcedStationIds: [] }));
+    const b = selectStops(candidates, points, cum, request());
+    expect(a.stops.map((s) => s.candidate.station.id)).toEqual(
+      b.stops.map((s) => s.candidate.station.id),
+    );
+  });
+
+  it('неіснуючий id не ламає планування', () => {
+    const r = selectStops(candidates, points, cum, request({ forcedStationIds: [99999] }));
+    expect(r.unreachable).toBe(false);
+    expect(r.stops.length).toBeGreaterThan(0);
   });
 });
 
