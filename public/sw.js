@@ -10,8 +10,8 @@
  * з сервера зникає, і застосунок намертво ламається у всіх, хто вже заходив.
  * Самі ж бандли навпаки безпечно брати з кешу — їхні імена унікальні.
  */
-const SHELL_CACHE = 'eplan-shell-v2';
-const DATA_CACHE = 'eplan-data-v2';
+const SHELL_CACHE = 'eplan-shell-v3';
+const DATA_CACHE = 'eplan-data-v3';
 
 // Довідники змінюються рідко — їх не соромно віддати з кешу, коли мережі немає.
 const CACHEABLE_API = ['/api/vehicles', '/api/networks'];
@@ -34,11 +34,25 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/**
+ * Чи можна класти цю відповідь у кеш під цією адресою.
+ *
+ * SPA-фолбек віддає index.html зі статусом 200 на будь-який неіснуючий шлях.
+ * Якщо таке закешувати під адресою скрипта, воно застрягне назавжди: браузер
+ * відмовиться виконувати HTML як модуль, і полагодити сервер вже не допоможе.
+ * Саме так у нас «зник» воркер MapLibre, а з ним і лінія маршруту.
+ */
+function cacheable(request, response) {
+  if (!response.ok) return false;
+  if (request.mode === 'navigate') return true;
+  return !(response.headers.get('content-type') ?? '').includes('text/html');
+}
+
 /** Мережа перша, кеш — запасний варіант. */
 async function networkFirst(request, cacheName) {
   try {
     const res = await fetch(request);
-    if (res.ok) {
+    if (cacheable(request, res)) {
       const copy = res.clone();
       caches.open(cacheName).then((c) => c.put(request, copy));
     }
@@ -83,7 +97,7 @@ self.addEventListener('fetch', (event) => {
       (cached) =>
         cached ??
         fetch(request).then((res) => {
-          if (res.ok) {
+          if (cacheable(request, res)) {
             const copy = res.clone();
             caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
           }
