@@ -132,6 +132,127 @@ export function corridorGeohashes(
 }
 
 /**
+ * Проріджує полілінію алгоритмом Дугласа — Пекера.
+ *
+ * Потрібно тільки для малювання: Valhalla віддає точку кожні ~70 м, і на
+ * маршруті в 1200 км це 18 тисяч координат, тобто майже 400 КБ на кожен
+ * варіант маршруту. На мобільному інтернеті це відчутно, а на екрані різниці
+ * немає — при толерансі в десятки метрів лінія візуально та сама.
+ *
+ * Розрахунки цим не користуються: вони працюють з повним набором точок.
+ */
+export function simplifyLine(line: [number, number][], toleranceKm: number): [number, number][] {
+  if (line.length <= 2) return line;
+
+  const keep = new Uint8Array(line.length);
+  keep[0] = 1;
+  keep[line.length - 1] = 1;
+
+  // Ітеративно, а не рекурсією: на 18 тисячах точок рекурсія ризикує стеком.
+  const stack: [number, number][] = [[0, line.length - 1]];
+  const kLat = 111.32;
+
+  while (stack.length > 0) {
+    const [first, last] = stack.pop()!;
+    if (last <= first + 1) continue;
+
+    const [aLat, aLon] = [line[first]![1], line[first]![0]];
+    const [bLat, bLon] = [line[last]![1], line[last]![0]];
+    const kLon = kLat * Math.cos(toRad(aLat));
+
+    const ax = aLon * kLon;
+    const ay = aLat * kLat;
+    const dx = bLon * kLon - ax;
+    const dy = bLat * kLat - ay;
+    const lenSq = dx * dx + dy * dy;
+
+    let worst = -1;
+    let worstIndex = first;
+    for (let i = first + 1; i < last; i++) {
+      const px = line[i]![0] * kLon - ax;
+      const py = line[i]![1] * kLat - ay;
+      const t = lenSq === 0 ? 0 : Math.max(0, Math.min(1, (px * dx + py * dy) / lenSq));
+      const d = Math.hypot(px - t * dx, py - t * dy);
+      if (d > worst) {
+        worst = d;
+        worstIndex = i;
+      }
+    }
+
+    if (worst > toleranceKm) {
+      keep[worstIndex] = 1;
+      stack.push([first, worstIndex], [worstIndex, last]);
+    }
+  }
+
+  return line.filter((_, i) => keep[i] === 1);
+}
+
+/**
+ * Просторовий індекс сегментів полілінії.
+ *
+ * Без нього пошук найближчого сегмента перебирає всю лінію: на маршруті
+ * Мадрид — Мон-Сен-Мішель це 15 000 точок на кожну з кількох тисяч станцій,
+ * тобто десятки мільйонів операцій — Worker'а вбиває ліміт процесорного часу.
+ *
+ * Ключ комірки будується так, щоб її розмір був не меншим за коридор пошуку:
+ * тоді достатньо перевірити комірку станції та вісім сусідніх.
+ */
+export interface SegmentIndex {
+  cells: Map<string, number[]>;
+  cellKm: number;
+}
+
+function cellKey(lat: number, lon: number, cellKm: number): string {
+  const latStep = cellKm / 111.32;
+  const lonStep = cellKm / (111.32 * Math.max(0.05, Math.cos(toRad(lat))));
+  return `${Math.floor(lat / latStep)}:${Math.floor(lon / lonStep)}`;
+}
+
+export function buildSegmentIndex(line: LatLon[], cellKm: number): SegmentIndex {
+  const cells = new Map<string, number[]>();
+  const add = (key: string, i: number) => {
+    const list = cells.get(key);
+    if (list) list.push(i);
+    else cells.set(key, [i]);
+  };
+
+  for (let i = 0; i < line.length - 1; i++) {
+    // Точки полілінії йдуть через десятки метрів, а комірка — кілометри,
+    // тож реєстрації обох кінців сегмента достатньо, щоб його не загубити.
+    add(cellKey(line[i]!.lat, line[i]!.lon, cellKm), i);
+    const nextKey = cellKey(line[i + 1]!.lat, line[i + 1]!.lon, cellKm);
+    if (nextKey !== cellKey(line[i]!.lat, line[i]!.lon, cellKm)) add(nextKey, i);
+  }
+  return { cells, cellKm };
+}
+
+/**
+ * Те саме, що distanceToPolylineKm, але дивиться лише в сусідні комірки індексу.
+ * Повертає null, якщо поблизу немає жодного сегмента — станція далеко від маршруту.
+ */
+export function distanceToIndexedLine(
+  point: LatLon,
+  line: LatLon[],
+  index: SegmentIndex,
+): { distanceKm: number; index: number; t: number } | null {
+  const latStep = index.cellKm / 111.32;
+  const lonStep = index.cellKm / (111.32 * Math.max(0.05, Math.cos(toRad(point.lat))));
+
+  const candidates: number[] = [];
+  for (let di = -1; di <= 1; di++) {
+    for (let dj = -1; dj <= 1; dj++) {
+      const key = cellKey(point.lat + di * latStep, point.lon + dj * lonStep, index.cellKm);
+      const list = index.cells.get(key);
+      if (list) candidates.push(...list);
+    }
+  }
+  if (candidates.length === 0) return null;
+
+  return nearestOnSegments(point, line, candidates);
+}
+
+/**
  * Найкоротша відстань від точки до полілінії, км, разом з індексом найближчого сегмента.
  * Плоска апроксимація — на масштабі кількох км похибка нехтовна.
  */
@@ -139,15 +260,27 @@ export function distanceToPolylineKm(
   point: LatLon,
   line: LatLon[],
 ): { distanceKm: number; index: number; t: number } {
+  const all: number[] = [];
+  for (let i = 0; i < line.length - 1; i++) all.push(i);
+  return nearestOnSegments(point, line, all);
+}
+
+/** Спільне ядро: найближча точка серед заданого набору сегментів. */
+function nearestOnSegments(
+  point: LatLon,
+  line: LatLon[],
+  segments: number[],
+): { distanceKm: number; index: number; t: number } {
   let best = Infinity;
   let bestIndex = 0;
   let bestT = 0;
   const kLat = 111.32;
   const kLon = 111.32 * Math.cos(toRad(point.lat));
 
-  for (let i = 0; i < line.length - 1; i++) {
+  for (const i of segments) {
     const a = line[i]!;
-    const b = line[i + 1]!;
+    const b = line[i + 1];
+    if (!b) continue;
     const ax = (a.lon - point.lon) * kLon;
     const ay = (a.lat - point.lat) * kLat;
     const bx = (b.lon - point.lon) * kLon;

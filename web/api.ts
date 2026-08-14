@@ -28,6 +28,28 @@ export interface SavedRouteSummary {
 
 export class ApiError extends Error {}
 
+/**
+ * Розшифровує відповіді, які повернув не наш Worker, а платформа.
+ *
+ * Найважливіший випадок — 1102: Worker вичерпав процесорний час. Користувач
+ * бачив просто «503», з чого неможливо зрозуміти ні причину, ні що робити.
+ */
+function describeGatewayError(status: number, body: string): string {
+  if (body.includes('1102')) {
+    return (
+      'Розрахунок виявився заважким і його перервано на сервері. ' +
+      'Спробуйте коротший маршрут або зменшіть «макс. об’їзд» у фільтрах.'
+    );
+  }
+  if (body.includes('1101')) {
+    return 'Сервер обробки маршруту завершився з помилкою. Спробуйте ще раз.';
+  }
+  if (status === 502 || status === 503 || status === 504) {
+    return `Сервер тимчасово недоступний (${status}). Спробуйте за хвилину.`;
+  }
+  return `Некоректна відповідь сервера (${status})`;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...init,
@@ -39,7 +61,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     body = text ? JSON.parse(text) : null;
   } catch {
-    throw new ApiError(`Некоректна відповідь сервера (${res.status})`);
+    // Не JSON — це сторінка помилки Cloudflare, тобто запит не дійшов до
+    // нашого коду і пояснити його нікому. Розшифровуємо самі.
+    throw new ApiError(describeGatewayError(res.status, text));
   }
 
   if (!res.ok) {

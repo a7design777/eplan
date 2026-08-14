@@ -8,7 +8,7 @@ import type {
   Station,
   Vehicle,
 } from '../types';
-import { distanceToPolylineKm } from '../lib/geo';
+import { buildSegmentIndex, distanceToIndexedLine, simplifyLine } from '../lib/geo';
 import { stationsAlongRoute } from '../stations/query';
 import { chargeTime, requiredSocPct } from './charge-curve';
 import { stopCost, tripCost } from './pricing';
@@ -116,11 +116,16 @@ export function projectStations(
   maxDetourKm: number,
 ): Candidate[] {
   const out: Candidate[] = [];
+  // Комірка не менша за коридор — тоді достатньо переглянути сусідні дев'ять.
+  const index = buildSegmentIndex(points, Math.max(maxDetourKm, 2));
+
   for (const station of stations) {
-    const { distanceKm: detourKm, index, t } = distanceToPolylineKm(station, points);
+    const hit = distanceToIndexedLine(station, points, index);
+    if (!hit) continue;
+    const { distanceKm: detourKm, index: segment, t } = hit;
     if (detourKm > maxDetourKm) continue;
-    const from = points[index]!;
-    const to = points[index + 1] ?? from;
+    const from = points[segment]!;
+    const to = points[segment + 1] ?? from;
     const distanceKm = from.distanceKm + t * (to.distanceKm - from.distanceKm);
     out.push({ station, distanceKm, detourKm });
   }
@@ -464,7 +469,15 @@ export async function planForRoute(
     vehicle.connectors,
     Math.max(filters.maxDetourKm, NEARBY_CORRIDOR_KM),
   );
-  const candidates = projectStations(stations, points, filters.maxDetourKm);
+  // Проєктуємо один раз по ширшому коридору, а вужчий набір для планувальника
+  // просто відфільтровуємо: повторна проєкція на довгому маршруті — це десятки
+  // мільйонів зайвих операцій.
+  const nearbyCandidates = projectStations(
+    stations,
+    points,
+    Math.max(filters.maxDetourKm, NEARBY_CORRIDOR_KM),
+  );
+  const candidates = nearbyCandidates.filter((c) => c.detourKm <= filters.maxDetourKm);
 
   const selection = selectStops(candidates, points, cumulative, req);
   const trimmed = trimStops(selection.stops, points, cumulative, req);
@@ -475,12 +488,7 @@ export async function planForRoute(
    * Обрані зупинки звідси прибираємо — вони вже показані як зупинки.
    */
   const chosenIds = new Set(trimmed.stops.map((s) => s.station.id));
-  // Окрема проєкція: для показу беремо ширший коридор, ніж для автоматичного вибору.
-  const nearbyStations = projectStations(
-    stations,
-    points,
-    Math.max(filters.maxDetourKm, NEARBY_CORRIDOR_KM),
-  )
+  const nearbyStations = nearbyCandidates
     .filter((c) => !chosenIds.has(c.station.id))
     .sort((a, b) => b.station.maxPowerKw - a.station.maxPowerKw || a.detourKm - b.detourKm)
     .slice(0, MAX_NEARBY_STATIONS)
@@ -498,7 +506,11 @@ export async function planForRoute(
   return {
     waypoints: req.waypoints,
     stops: trimmed.stops,
-    geometry: points.map((p) => [p.lon, p.lat] as [number, number]),
+    // 30 м — на екрані невідрізнити від повної лінії, але даних у рази менше.
+    geometry: simplifyLine(
+      points.map((p) => [p.lon, p.lat] as [number, number]),
+      0.03,
+    ),
     totalDistanceKm: round1(route.distanceKm + detourKm),
     drivingDurationMin: Math.round(route.durationMin),
     chargingDurationMin,

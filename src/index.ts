@@ -22,8 +22,20 @@ const api = new Hono<App>();
 
 api.onError((err, c) => {
   if (err instanceof ValidationError) return c.json({ error: err.message }, 400);
-  console.error('API error', err);
-  return c.json({ error: err.message || 'Внутрішня помилка' }, 500);
+  console.error('API error', c.req.path, err);
+
+  // Проблеми зовнішніх сервісів окремо: користувач має розуміти, що це не його
+  // запит поганий і що варто спробувати ще раз, а не міняти маршрут.
+  const message = err.message ?? '';
+  if (message.startsWith('Valhalla')) {
+    return c.json(
+      {
+        error: `Сервіс маршрутизації не відповів: ${message}. Це безкоштовний публічний сервер — спробуйте за хвилину.`,
+      },
+      502,
+    );
+  }
+  return c.json({ error: message || 'Внутрішня помилка' }, 500);
 });
 
 api.get('/vehicles', (c) => c.json(vehicles as Vehicle[]));
