@@ -5,6 +5,8 @@ interface Props {
   networks: NetworkInfo[];
   selected: number[];
   count: number;
+  /** Показано не всі станції — решта не влізла в ліміт видачі. */
+  truncated: boolean;
   freeOnly: boolean;
   onChange: (ids: number[]) => void;
   onFreeOnlyChange: (v: boolean) => void;
@@ -22,6 +24,7 @@ export function StationLayer({
   networks,
   selected,
   count,
+  truncated,
   freeOnly,
   onChange,
   onFreeOnlyChange,
@@ -85,6 +88,12 @@ export function StationLayer({
         />
         Тільки безкоштовні
       </label>
+
+      {truncated && (
+        <div className="banner banner-warn">
+          Показано перші {count} — станцій більше. Наблизьте мапу або оберіть мережу.
+        </div>
+      )}
 
       <div className="station-layer-meta">
         {selected.length === 0 ? 'Показано всі мережі' : `Обрано мереж: ${selected.length}`}

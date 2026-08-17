@@ -76,6 +76,67 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+export type PlanStage = 'route' | 'stations' | 'alternatives' | 'tollFree' | 'cached';
+
+/**
+ * Планування з етапами.
+ *
+ * Читаємо SSE вручну, а не через EventSource: той уміє лише GET, а запит на
+ * планування великий і йде тілом POST. Якщо стрім недоступний — тихо падаємо
+ * на звичайний /api/plan, щоб маршрут усе одно порахувався.
+ */
+async function planWithProgress(
+  body: PlanRequest,
+  onStage: (stage: PlanStage) => void,
+): Promise<PlanResponse> {
+  let res: Response;
+  try {
+    res = await fetch('/api/plan/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return api.plan(body);
+  }
+
+  if (!res.ok || !res.body) {
+    // Помилку зі звичайного шляху вже вміє пояснювати request().
+    return api.plan(body);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let result: PlanResponse | null = null;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Події SSE розділені порожнім рядком; останній шматок може бути неповним.
+    const parts = buffer.split('\n\n');
+    buffer = parts.pop() ?? '';
+
+    for (const part of parts) {
+      const line = part.split('\n').find((l) => l.startsWith('data: '));
+      if (!line) continue;
+      const payload = JSON.parse(line.slice(6)) as {
+        stage?: PlanStage;
+        result?: PlanResponse;
+        error?: string;
+      };
+      if (payload.error) throw new ApiError(payload.error);
+      if (payload.stage) onStage(payload.stage);
+      if (payload.result) result = payload.result;
+    }
+  }
+
+  if (!result) throw new ApiError('Сервер не повернув маршрут');
+  return result;
+}
+
 export const api = {
   vehicles: () => request<Vehicle[]>('/vehicles'),
   networks: () => request<NetworkInfo[]>('/networks'),
@@ -85,7 +146,7 @@ export const api = {
   reverse: (lat: number, lon: number) => request<Waypoint>(`/reverse?lat=${lat}&lon=${lon}`),
 
   stations: (b: Bbox, networkIds: number[], minPowerKw: number, freeOnly = false) =>
-    request<Station[]>(
+    request<{ stations: Station[]; truncated: boolean; limit: number }>(
       `/stations?minLat=${b.minLat}&maxLat=${b.maxLat}&minLon=${b.minLon}&maxLon=${b.maxLon}` +
         `&networks=${networkIds.join(',')}&minPowerKw=${minPowerKw}` +
         (freeOnly ? '&freeOnly=1' : ''),
@@ -93,6 +154,8 @@ export const api = {
 
   plan: (body: PlanRequest) =>
     request<PlanResponse>('/plan', { method: 'POST', body: JSON.stringify(body) }),
+
+  planWithProgress: planWithProgress,
 
   me: () => request<AuthUser>('/auth/me'),
   register: (email: string, password: string, inviteCode: string) =>

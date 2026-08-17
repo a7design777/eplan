@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { api, type AuthUser, type Bbox, type NetworkInfo, type SavedRouteSummary } from './api';
+import {
+  api,
+  type AuthUser,
+  type Bbox,
+  type NetworkInfo,
+  type PlanStage,
+  type SavedRouteSummary,
+} from './api';
 import { MapView } from './components/MapView';
 import { WaypointInput } from './components/WaypointInput';
 import { PlanSummary } from './components/PlanSummary';
@@ -24,6 +31,15 @@ import type {
   Vehicle,
   Waypoint,
 } from '../src/types';
+
+/** Що саме зараз робить сервер. Етапи справжні, не вигаданий відсоток. */
+const STAGE_LABELS: Record<PlanStage, string> = {
+  route: 'Шукаю дорогу…',
+  stations: 'Підбираю зарядки…',
+  alternatives: 'Рахую інші варіанти…',
+  tollFree: 'Шукаю обхід платних…',
+  cached: 'Готую збережений розрахунок…',
+};
 
 const DEFAULT_FILTERS: PlanFilters = {
   connectors: [],
@@ -81,6 +97,8 @@ export function App() {
   const [browseStations, setBrowseStations] = useState<Station[]>([]);
   const [bbox, setBbox] = useState<Bbox | null>(null);
   const [planning, setPlanning] = useState(false);
+  const [stage, setStage] = useState<PlanStage | null>(null);
+  const [stationsTruncated, setStationsTruncated] = useState(false);
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -190,8 +208,16 @@ export function App() {
     const timer = setTimeout(() => {
       api
         .stations(bbox, mapNetworkIds, mapFreeOnly ? 2 : filters.minPowerKw, mapFreeOnly)
-        .then((s) => !cancelled && setBrowseStations(s))
-        .catch(() => !cancelled && setBrowseStations([]));
+        .then((r) => {
+          if (cancelled) return;
+          setBrowseStations(r.stations);
+          setStationsTruncated(r.truncated);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setBrowseStations([]);
+          setStationsTruncated(false);
+        });
     }, 300);
 
     return () => {
@@ -300,9 +326,10 @@ export function App() {
     const req = buildRequest();
     if (!req) return;
     setPlanning(true);
+    setStage(null);
     setError(null);
     try {
-      const res = await api.plan(req);
+      const res = await api.planWithProgress(req, setStage);
       setResult(res);
       setVariant('primary');
     } catch (e) {
@@ -310,6 +337,7 @@ export function App() {
       setResult(null);
     } finally {
       setPlanning(false);
+      setStage(null);
     }
   };
 
@@ -508,7 +536,14 @@ export function App() {
           )}
 
           <button className="btn btn-primary btn-block" disabled={!canPlan} onClick={runPlan}>
-            {planning ? <span className="spinner" /> : 'Прокласти маршрут'}
+            {planning ? (
+              <>
+                <span className="spinner" />
+                <span className="stage-label">{STAGE_LABELS[stage ?? 'route']}</span>
+              </>
+            ) : (
+              'Прокласти маршрут'
+            )}
           </button>
 
           {error && <div className="banner banner-error">{error}</div>}
@@ -655,6 +690,7 @@ export function App() {
             networks={networks}
             selected={mapNetworkIds}
             count={browseStations.length}
+            truncated={stationsTruncated}
             freeOnly={mapFreeOnly}
             onChange={setMapNetworkIds}
             onFreeOnlyChange={setMapFreeOnly}

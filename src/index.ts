@@ -10,16 +10,50 @@ import {
   ValidationError,
 } from './api/validate';
 import { plan } from './routing/planner';
+import { planCacheKey, readPlanCache, writePlanCache } from './routing/plan-cache';
 import { ValhallaProvider } from './routing/valhalla';
 import { temperatureAt } from './routing/weather';
 import { importStations } from './stations/import';
 import { stationsInBbox } from './stations/query';
-import type { Env, Vehicle } from './types';
+import type { Env, PlanRequest, Vehicle } from './types';
 
 type App = { Bindings: Env; Variables: { user: AuthUser } };
 
 const app = new Hono<App>();
 const api = new Hono<App>();
+
+/**
+ * Перетворює помилку на текст, зрозумілий людині.
+ *
+ * Спільне для звичайного і стрімового планування: у стрімі статус відповіді
+ * змінити вже пізно, тому пояснення має бути в самому повідомленні.
+ * Повертає null, якщо це не відома нам помилка.
+ */
+function describePlanError(err: Error): string {
+  const message = err.message ?? '';
+  if (!message.startsWith('Valhalla')) return message || 'Внутрішня помилка';
+
+  // Частина відмов рушія постійні: чекати й повторювати безглуздо, треба
+  // міняти сам запит. Радити «спробуйте за хвилину» там — знущання.
+  if (/max distance|distance exceeds/i.test(message)) {
+    return (
+      'Маршрут задовгий для сервісу маршрутизації. Розбийте поїздку на кілька ' +
+      'частин — додайте проміжну точку десь посередині.'
+    );
+  }
+  if (/no suitable edge|no path|not found/i.test(message)) {
+    return (
+      'Не вдалося прокласти дорогу між цими точками. Перевірте, що вони на суходолі ' +
+      'й біля проїзної дороги, або перенесіть їх ближче до траси.'
+    );
+  }
+  return `Сервіс маршрутизації не відповів: ${message}. Це безкоштовний публічний сервер — спробуйте за хвилину.`;
+}
+
+/** Постійні відмови — це помилка запиту (400), тимчасові — шлюзу (502). */
+function isPermanentRoutingError(message: string): boolean {
+  return /max distance|distance exceeds|no suitable edge|no path|not found/i.test(message);
+}
 
 api.onError((err, c) => {
   if (err instanceof ValidationError) return c.json({ error: err.message }, 400);
@@ -32,37 +66,11 @@ api.onError((err, c) => {
 
   console.error('API error', c.req.path, err);
 
-  // Проблеми зовнішніх сервісів окремо: користувач має розуміти, що це не його
-  // запит поганий і що варто спробувати ще раз, а не міняти маршрут.
   const message = err.message ?? '';
   if (message.startsWith('Valhalla')) {
-    // Частина відмов рушія постійні: чекати й повторювати безглуздо, треба
-    // міняти сам запит. Радити «спробуйте за хвилину» там — знущання.
-    if (/max distance|distance exceeds/i.test(message)) {
-      return c.json(
-        {
-          error:
-            'Маршрут задовгий для сервісу маршрутизації. Розбийте поїздку на кілька ' +
-            'частин — додайте проміжну точку десь посередині.',
-        },
-        400,
-      );
-    }
-    if (/no suitable edge|no path|not found/i.test(message)) {
-      return c.json(
-        {
-          error:
-            'Не вдалося прокласти дорогу між цими точками. Перевірте, що вони на суходолі ' +
-            'й біля проїзної дороги, або перенесіть їх ближче до траси.',
-        },
-        400,
-      );
-    }
     return c.json(
-      {
-        error: `Сервіс маршрутизації не відповів: ${message}. Це безкоштовний публічний сервер — спробуйте за хвилину.`,
-      },
-      502,
+      { error: describePlanError(err) },
+      isPermanentRoutingError(message) ? 400 : 502,
     );
   }
   return c.json({ error: message || 'Внутрішня помилка' }, 500);
@@ -166,7 +174,10 @@ api.get('/stations', async (c) => {
     .map((v) => Number(v))
     .filter((v) => Number.isFinite(v) && v > 0);
 
-  const stations = await stationsInBbox(c.env, {
+  // Запитуємо на одну більше за ліміт: якщо прийшла — станцій більше, ніж
+  // показуємо, і про це треба сказати, а не мовчки обрізати.
+  const limit = 400;
+  const rows = await stationsInBbox(c.env, {
     minLat,
     maxLat,
     minLon,
@@ -174,25 +185,85 @@ api.get('/stations', async (c) => {
     networkIds,
     minPowerKw: Number.isFinite(Number(q.minPowerKw)) ? Number(q.minPowerKw) : 50,
     freeOnly: q.freeOnly === '1',
-    limit: 400,
+    limit: limit + 1,
   });
-  return c.json(stations);
+
+  const truncated = rows.length > limit;
+  return c.json({ stations: truncated ? rows.slice(0, limit) : rows, truncated, limit });
 });
 
-api.post('/plan', async (c) => {
-  const req = parsePlanRequest(await c.req.json());
+/** Підставляє реальну температуру, якщо користувач не задав її вручну. */
+async function withLiveWeather(env: Env, req: PlanRequest): Promise<PlanRequest> {
+  if (!req.filters.useLiveWeather) return req;
+  const mid = req.waypoints[Math.floor(req.waypoints.length / 2)]!;
+  const live = await temperatureAt(env, mid);
+  if (live !== null) req.filters.temperatureC = live;
+  return req;
+}
 
-  // Реальна температура точніша за ту, що користувач вгадав. Якщо він задав її
-  // явно (useLiveWeather вимкнено) або погода недоступна — лишаємо його число.
-  if (req.filters.useLiveWeather) {
-    const mid = req.waypoints[Math.floor(req.waypoints.length / 2)]!;
-    const live = await temperatureAt(c.env, mid);
-    if (live !== null) req.filters.temperatureC = live;
-  }
+api.post('/plan', async (c) => {
+  const req = await withLiveWeather(c.env, parsePlanRequest(await c.req.json()));
+
+  const key = await planCacheKey(req);
+  const cached = await readPlanCache(c.env, key);
+  if (cached) return c.json(cached);
 
   const provider = new ValhallaProvider(c.env);
   const result = await plan(c.env, provider, req);
-  return c.json({ ...result, temperatureC: req.filters.temperatureC });
+  const payload = { ...result, temperatureC: req.filters.temperatureC };
+
+  c.executionCtx.waitUntil(writePlanCache(c.env, key, payload));
+  return c.json(payload);
+});
+
+/**
+ * Те саме планування, але з етапами.
+ *
+ * Довгий маршрут рахується кілька секунд, і мовчазна крутилка не каже нічого.
+ * Стрім віддає реальні етапи — не вигаданий відсоток прогресу, а те, що
+ * справді відбувається зараз.
+ */
+api.post('/plan/stream', async (c) => {
+  const req = await withLiveWeather(c.env, parsePlanRequest(await c.req.json()));
+  const key = await planCacheKey(req);
+  const env = c.env;
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder();
+      const send = (obj: unknown) =>
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+
+      try {
+        const cached = await readPlanCache(env, key);
+        if (cached) {
+          send({ stage: 'cached' });
+          send({ result: cached });
+          controller.close();
+          return;
+        }
+
+        const provider = new ValhallaProvider(env);
+        const result = await plan(env, provider, req, (stage) => send({ stage }));
+        const payload = { ...result, temperatureC: req.filters.temperatureC };
+
+        await writePlanCache(env, key, payload);
+        send({ result: payload });
+      } catch (err) {
+        // Помилку теж треба донести: стрім уже почався, і статус змінити пізно.
+        send({ error: describePlanError(err as Error) });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache',
+    },
+  });
 });
 
 // --- Авторизація ---

@@ -557,13 +557,23 @@ function straightLineKm(waypoints: LatLon[]): number {
 }
 
 /** Точка входу: основний маршрут, альтернативні варіанти і обхід платних доріг. */
+/**
+ * Етапи розрахунку — щоб інтерфейс показував, що саме зараз відбувається,
+ * а не крутилку на дев'ять секунд.
+ */
+export type PlanStage = 'route' | 'stations' | 'alternatives' | 'tollFree';
+
+export type ProgressFn = (stage: PlanStage) => void;
+
 export async function plan(
   env: Env,
   provider: RoutingProvider,
   req: PlanRequest,
+  onProgress: ProgressFn = () => {},
 ): Promise<{ primary: RoutePlan; tollFree: RoutePlan | null; alternatives: RoutePlan[] }> {
   const longTrip = straightLineKm(req.waypoints) > ALTERNATES_MAX_KM;
 
+  onProgress('route');
   const routes = await provider.routes(req.waypoints, {
     excludeTolls: req.filters.avoidTolls,
     elevationIntervalM: ELEVATION_INTERVAL_M,
@@ -573,8 +583,11 @@ export async function plan(
   const [mainRoute, ...alternateRoutes] = routes;
   if (!mainRoute) throw new Error('Не вдалося прокласти маршрут');
 
+  onProgress('stations');
   const primary = await planForRoute(env, mainRoute, req);
+
   const alternatives: RoutePlan[] = [];
+  if (alternateRoutes.length > 0) onProgress('alternatives');
   for (const r of alternateRoutes) {
     alternatives.push(await planForRoute(env, r, req));
   }
@@ -585,6 +598,7 @@ export async function plan(
   }
 
   try {
+    onProgress('tollFree');
     const freeRoute = await provider.route(req.waypoints, {
       excludeTolls: true,
       elevationIntervalM: ELEVATION_INTERVAL_M,
