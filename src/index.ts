@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import vehicles from '../data/vehicles.json';
 import { currentUser, createSession, destroySession, requireAuth, type AuthUser } from './auth/session';
 import { hashPassword, verifyPassword } from './auth/password';
+import { checkAttempts, clearAttempts } from './auth/throttle';
 import {
   parseCredentials,
   parsePlanRequest,
@@ -22,12 +23,41 @@ const api = new Hono<App>();
 
 api.onError((err, c) => {
   if (err instanceof ValidationError) return c.json({ error: err.message }, 400);
+
+  // Биті дані — це помилка запиту, а не сервера. Текст парсера JS назовні
+  // віддавати теж ні до чого: користувачу він нічого не пояснює.
+  if (err instanceof SyntaxError) {
+    return c.json({ error: 'Тіло запиту не є коректним JSON' }, 400);
+  }
+
   console.error('API error', c.req.path, err);
 
   // Проблеми зовнішніх сервісів окремо: користувач має розуміти, що це не його
   // запит поганий і що варто спробувати ще раз, а не міняти маршрут.
   const message = err.message ?? '';
   if (message.startsWith('Valhalla')) {
+    // Частина відмов рушія постійні: чекати й повторювати безглуздо, треба
+    // міняти сам запит. Радити «спробуйте за хвилину» там — знущання.
+    if (/max distance|distance exceeds/i.test(message)) {
+      return c.json(
+        {
+          error:
+            'Маршрут задовгий для сервісу маршрутизації. Розбийте поїздку на кілька ' +
+            'частин — додайте проміжну точку десь посередині.',
+        },
+        400,
+      );
+    }
+    if (/no suitable edge|no path|not found/i.test(message)) {
+      return c.json(
+        {
+          error:
+            'Не вдалося прокласти дорогу між цими точками. Перевірте, що вони на суходолі ' +
+            'й біля проїзної дороги, або перенесіть їх ближче до траси.',
+        },
+        400,
+      );
+    }
     return c.json(
       {
         error: `Сервіс маршрутизації не відповів: ${message}. Це безкоштовний публічний сервер — спробуйте за хвилину.`,
@@ -167,7 +197,12 @@ api.post('/plan', async (c) => {
 
 // --- Авторизація ---
 
+const TOO_MANY = 'Забагато спроб. Спробуйте за 15 хвилин.';
+
 api.post('/auth/register', async (c) => {
+  const gate = await checkAttempts(c.env, c.req.raw, 'register');
+  if (!gate.allowed) return c.json({ error: TOO_MANY }, 429);
+
   const body = (await c.req.json()) as { inviteCode?: unknown };
   const { email, password } = parseCredentials(body);
 
@@ -196,6 +231,9 @@ api.post('/auth/register', async (c) => {
 });
 
 api.post('/auth/login', async (c) => {
+  const gate = await checkAttempts(c.env, c.req.raw, 'login');
+  if (!gate.allowed) return c.json({ error: TOO_MANY }, 429);
+
   const { email, password } = parseCredentials(await c.req.json());
   const user = await c.env.DB.prepare('SELECT id, email, password_hash FROM users WHERE email = ?')
     .bind(email)
@@ -207,6 +245,7 @@ api.post('/auth/login', async (c) => {
     return c.json({ error: 'Невірний email або пароль' }, 401);
   }
 
+  await clearAttempts(c.env, c.req.raw, 'login');
   await createSession(c, user.id);
   return c.json({ id: user.id, email: user.email });
 });

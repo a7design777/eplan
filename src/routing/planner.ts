@@ -1,5 +1,6 @@
 import type {
   ChargeStop,
+  LatLon,
   ChargingStrategy,
   Env,
   PlanRequest,
@@ -8,7 +9,7 @@ import type {
   Station,
   Vehicle,
 } from '../types';
-import { buildSegmentIndex, distanceToIndexedLine, simplifyLine } from '../lib/geo';
+import { buildSegmentIndex, distanceToIndexedLine, haversineKm, simplifyLine } from '../lib/geo';
 import { stationsAlongRoute } from '../stations/query';
 import { chargeTime, requiredSocPct } from './charge-curve';
 import { stopCost, tripCost } from './pricing';
@@ -534,16 +535,39 @@ export async function planForRoute(
 /** Скільки альтернативних варіантів проїзду просити в рушія. */
 const ALTERNATE_ROUTES = 2;
 
+/**
+ * Понад цю довжину альтернативні варіанти не рахуємо.
+ *
+ * Кожен варіант — це повний прохід: вибірка станцій з бази, проєкція тисяч
+ * точок на полілінію, планування зупинок. На маршруті в 1750 км чотири таких
+ * проходи вичерпували процесорний час Worker'а, і користувач отримував 503
+ * замість маршруту. Краще один надійний варіант, ніж три, яких не буде.
+ *
+ * Обхід платних доріг лишається за будь-якої довжини — він цінніший, бо міняє
+ * не форму дороги, а вартість поїздки.
+ */
+const ALTERNATES_MAX_KM = 900;
+
+/** Груба оцінка довжини маршруту до звернення до рушія. */
+function straightLineKm(waypoints: LatLon[]): number {
+  let km = 0;
+  for (let i = 1; i < waypoints.length; i++) km += haversineKm(waypoints[i - 1]!, waypoints[i]!);
+  // Реальна дорога довша за пряму приблизно на чверть.
+  return km * 1.25;
+}
+
 /** Точка входу: основний маршрут, альтернативні варіанти і обхід платних доріг. */
 export async function plan(
   env: Env,
   provider: RoutingProvider,
   req: PlanRequest,
 ): Promise<{ primary: RoutePlan; tollFree: RoutePlan | null; alternatives: RoutePlan[] }> {
+  const longTrip = straightLineKm(req.waypoints) > ALTERNATES_MAX_KM;
+
   const routes = await provider.routes(req.waypoints, {
     excludeTolls: req.filters.avoidTolls,
     elevationIntervalM: ELEVATION_INTERVAL_M,
-    alternates: ALTERNATE_ROUTES,
+    alternates: longTrip ? 0 : ALTERNATE_ROUTES,
   });
 
   const [mainRoute, ...alternateRoutes] = routes;
