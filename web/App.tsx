@@ -76,6 +76,8 @@ export function App() {
   const [variant, setVariant] = useState<string>('primary');
 
   const [pickMode, setPickMode] = useState(false);
+  /** Мобільний вигляд: мапа на весь екран замість половини під панеллю з підсумком. */
+  const [mapFullscreen, setMapFullscreen] = useState(false);
   /** Станції, які користувач сам призначив зупинками на мапі. */
   const [forcedStationIds, setForcedStationIds] = useState<number[]>([]);
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
@@ -416,7 +418,7 @@ export function App() {
     variants.find((v) => v.id === variant)?.plan ?? result?.primary ?? null;
 
   return (
-    <div className="app">
+    <div className={`app${mapFullscreen ? ' map-fullscreen' : ''}`}>
       <aside className="sidebar">
         <div className="topbar">
           <div className="brand">
@@ -648,6 +650,15 @@ export function App() {
         )}
 
         <div className="map-toggles">
+          {shownPlan && (
+            <button
+              className={`map-toggle map-fullscreen-toggle${mapFullscreen ? ' on' : ''}`}
+              onClick={() => setMapFullscreen((v) => !v)}
+              title="Мапа на весь екран"
+            >
+              {mapFullscreen ? '✕ Закрити' : '⛶ На весь екран'}
+            </button>
+          )}
           <button
             className={`map-toggle${pickMode ? ' on' : ''}`}
             onClick={() => setPickMode((v) => !v)}

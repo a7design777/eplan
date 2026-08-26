@@ -133,6 +133,16 @@ summary {
        усе, чим керуєш, лишається в досяжності великого пальця. */
     grid-template-rows: 42dvh minmax(0, 1fr);
   }
+
+  /* Після перебудови маршруту панель з підсумком забирає більшість екрана —
+     ця кнопка дозволяє на мить розгорнути мапу на весь екран і подивитись
+     маршрут цілком, не гортаючи картки зупинок. */
+  .app.map-fullscreen {
+    grid-template-rows: 1fr 0;
+  }
+  .app.map-fullscreen .sidebar {
+    overflow: hidden;
+  }
   .sidebar {
     border-right: none;
     border-top: 1px solid var(--border);
@@ -637,6 +647,18 @@ details.filters > div {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 650;
+}
+
+/* Кнопка на весь екран — потрібна лише на вузьких екранах, де мапа й так
+   ділить простір із панеллю; на десктопі мапа вже займає всю праву частину. */
+.map-fullscreen-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .map-fullscreen-toggle {
+    display: inline-flex;
+  }
 }
 
 .station-layer {

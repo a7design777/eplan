@@ -13,6 +13,68 @@ const EMPTY_LINE = {
   geometry: { type: 'LineString', coordinates: [] as [number, number][] },
 } as const satisfies maplibregl.GeoJSONSourceSpecification['data'];
 
+const EARTH_RADIUS_KM = 6371;
+
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const [lon1, lat1] = a;
+  const [lon2, lat2] = b;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(s));
+}
+
+/** Найбільша відстань від зарядки в коридорі, за межами якої вважаємо ділянку «без покриття». */
+const GAP_DETOUR_KM = 5;
+/** Ділянки коротші за це не варті окремого виділення на мапі — самі лише «шви» між зарядками. */
+const MIN_GAP_KM = 15;
+
+/**
+ * Ділянки маршруту, де поруч немає жодної зарядки (ні використаної в плані,
+ * ні альтернативної в коридорі) — щоб виділити їх на мапі окремим кольором.
+ * Межі беремо з дистанцій зупинок і найближчих станцій уздовж маршруту,
+ * а не рахуємо коридор наново — вся потрібна інформація вже прийшла з плану.
+ */
+function findChargerGaps(plan: RoutePlan): { fromKm: number; toKm: number }[] {
+  const covered = [
+    ...plan.stops.map((s) => s.distanceKm),
+    ...plan.nearbyStations.filter((s) => s.detourKm <= GAP_DETOUR_KM).map((s) => s.distanceKm),
+  ].sort((a, b) => a - b);
+
+  if (covered.length === 0) {
+    return plan.totalDistanceKm >= MIN_GAP_KM ? [{ fromKm: 0, toKm: plan.totalDistanceKm }] : [];
+  }
+
+  const gaps: { fromKm: number; toKm: number }[] = [];
+  let prev = 0;
+  for (const km of covered) {
+    if (km - prev >= MIN_GAP_KM) gaps.push({ fromKm: prev, toKm: km });
+    prev = Math.max(prev, km);
+  }
+  if (plan.totalDistanceKm - prev >= MIN_GAP_KM) {
+    gaps.push({ fromKm: prev, toKm: plan.totalDistanceKm });
+  }
+  return gaps;
+}
+
+/** Вирізати ділянку полілінії між двома позначками «км від старту». */
+function sliceGeometryByDistance(
+  geometry: [number, number][],
+  fromKm: number,
+  toKm: number,
+): [number, number][] {
+  if (geometry.length < 2) return [];
+  const slice: [number, number][] = [];
+  let cumKm = 0;
+  for (let i = 0; i < geometry.length; i++) {
+    if (i > 0) cumKm += haversineKm(geometry[i - 1]!, geometry[i]!);
+    if (cumKm >= fromKm && cumKm <= toKm) slice.push(geometry[i]!);
+  }
+  return slice;
+}
+
 interface Props {
   plan: RoutePlan | null;
   waypoints: Waypoint[];
@@ -146,6 +208,22 @@ export function MapView({
 
       const coordinates = plan?.geometry ?? [];
       source.setData({ ...EMPTY_LINE, geometry: { type: 'LineString', coordinates } });
+
+      const gapSource = map.getSource('route-gaps') as maplibregl.GeoJSONSource | undefined;
+      if (gapSource) {
+        const gaps = plan ? findChargerGaps(plan) : [];
+        gapSource.setData({
+          type: 'FeatureCollection',
+          features: gaps.map((g) => ({
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: sliceGeometryByDistance(coordinates, g.fromKm, g.toKm),
+            },
+          })),
+        });
+      }
 
       for (const m of markersRef.current) m.remove();
       markersRef.current = [];

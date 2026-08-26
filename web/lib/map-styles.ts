@@ -39,6 +39,10 @@ function routeLayers(dark: boolean): Pick<StyleSpecification, 'sources' | 'layer
         type: 'geojson',
         data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [] } },
       },
+      'route-gaps': {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      },
     },
     layers: [
       {
@@ -58,6 +62,19 @@ function routeLayers(dark: boolean): Pick<StyleSpecification, 'sources' | 'layer
         source: 'route',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': dark ? '#3ddc84' : '#22a35f', 'line-width': 5 },
+      },
+      {
+        // Ділянки без зарядок поруч — поверх основної лінії, щоб виділялись,
+        // а не ховались під нею.
+        id: 'route-gaps-line',
+        type: 'line',
+        source: 'route-gaps',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': dark ? '#ff8a3d' : '#e0651a',
+          'line-width': 5,
+          'line-dasharray': [0.2, 1.6],
+        },
       },
     ],
   };
