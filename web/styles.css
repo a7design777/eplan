@@ -104,6 +104,9 @@ summary {
 .map {
   position: absolute;
   inset: 0;
+  /* Pinch і подвійний тап тут належать самій мапі — без цього браузер іноді
+     також намагається змасштабувати сторінку, і зум лишається зламаним. */
+  touch-action: none;
 }
 
 .map-hint {
@@ -232,14 +235,24 @@ summary {
 }
 
 .brand {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   font-weight: 650;
   font-size: 15px;
   letter-spacing: -0.01em;
   margin-right: auto;
 }
 
-.brand span {
+.brand > span:first-child {
   color: var(--accent);
+}
+
+.brand .version {
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: normal;
 }
 
 /* --- Блоки --- */

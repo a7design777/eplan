@@ -423,6 +423,9 @@ export function App() {
         <div className="topbar">
           <div className="brand">
             <span>⚡</span> eplan
+            <span className="version" title={`Коміт ${__COMMIT_HASH__}`}>
+              v{__APP_VERSION__}+{__COMMIT_HASH__}
+            </span>
           </div>
           {user ? (
             <>

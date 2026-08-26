@@ -1,8 +1,25 @@
 import { copyFile, mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { execSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+
+const require = createRequire(import.meta.url);
+const { version } = require('./package.json') as { version: string };
+
+/**
+ * Хеш коміту в білді — щоб на очі бачити, яка саме версія зараз на проді,
+ * а не гадати, чи задеплоївся останній коміт. `npm run dev` цього не показує:
+ * там немає окремого білд-кроку, версія бере лише з package.json.
+ */
+function commitHash(): string {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'unknown';
+  }
+}
 
 /**
  * Кладе воркер MapLibre поруч зі зібраним бандлом.
@@ -15,7 +32,6 @@ import react from '@vitejs/plugin-react';
  * саме у воркері.
  */
 function maplibreWorker(): Plugin {
-  const require = createRequire(import.meta.url);
   // Воркер тягне за собою спільний чанк — без нього він не завантажиться.
   const files = ['maplibre-gl-worker.mjs', 'maplibre-gl-shared.mjs'];
 
@@ -36,6 +52,10 @@ function maplibreWorker(): Plugin {
 
 export default defineConfig({
   plugins: [react(), maplibreWorker()],
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __COMMIT_HASH__: JSON.stringify(commitHash()),
+  },
   build: {
     // Worker роздає зібраний фронтенд через binding ASSETS, див. wrangler.jsonc.
     outDir: 'dist/client',

@@ -2,9 +2,15 @@
 <html lang="uk">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      maximum-scale=1, user-scalable=no: мапа сама обробляє pinch-жести (свій zoom),
+      і якщо браузер одночасно масштабує всю сторінку — вони "тягнуть" одне проти
+      одного і масштаб після цього лишається кривим (сторінка не повертається на 1.0).
+      Керування зумом лишається — просто через саму мапу, а не системний pinch.
+    -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#0a7d3c" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0e1116" media="(prefers-color-scheme: dark)" />
